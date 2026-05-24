@@ -1,13 +1,30 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <title>EDT Partagé</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-    <h1>Mon appli synchronisée</h1>
+
+    <div id="login">
+        <input id="user" placeholder="username">
+        <input id="pass" placeholder="password">
+
+        <button onclick="register()">Register</button>
+        <button onclick="login()">Login</button>
+    </div>
+
+    <div id="app" style="display:none;">
+        <h2>Welcome</h2>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <script src="script.js"></script>
 
     <script src="script.js"></script>
 </body>
+
 </html>
