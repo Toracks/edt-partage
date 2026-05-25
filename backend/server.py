@@ -6,7 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 # ---------------- APP INIT ----------------
 app = Flask(__name__)
-app.secret_key = "32768:8:1$ikzSpC4pawAKjoHn$0150909b349048d9fc8ecf629b1f44ae02963ed64ec845ca0e2d6a1bccb4ef589c1433d1c227dcac25dfac4e1d41c0de0b197e41313e2b955454e8f509ab3294"
+app.secret_key = "N@rut0m272010admin"
 app.permanent_session_lifetime = timedelta(days=30)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -123,7 +123,7 @@ def logout():
 # ================== ADMIN SYSTEM ======================
 # =====================================================
 
-ADMIN_PASSWORD_HASH = "32768:8:1$3xeBwRWXs7UaPF29$4f045cda3f9ff789c8f92c1a42a3085636ee446b60ac310cdbef3641b8e7eeb61ec61c9de106f261593376fea0e2c9d72599e8b4dbe3c9934a0068ca4a3a8983"
+ADMIN_PASSWORD_HASH = "Greninj@272010admin"
 
 def is_admin():
     return session.get("admin") is True
