@@ -51,7 +51,7 @@ def register():
     hashed = generate_password_hash(password)
 
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, timeout=10)
         c = conn.cursor()
 
         c.execute("""
@@ -60,14 +60,18 @@ def register():
         """, (username, hashed))
 
         conn.commit()
-        conn.close()
 
-        return jsonify({"message": "Account created"})
+    except sqlite3.IntegrityError:
+        return jsonify({"error": "Username already exists"}), 400
 
     except Exception as e:
-        print("REGISTER ERROR:", e)   # 🔥 IMPORTANT
+        print("REGISTER ERROR:", e)
         return jsonify({"error": str(e)}), 500
 
+    finally:
+        conn.close()
+
+    return jsonify({"message": "Account created"})
 # ---------------- LOGIN ----------------
 @app.route("/login", methods=["POST"])
 def login():
