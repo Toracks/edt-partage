@@ -17,6 +17,24 @@ window.onload = () => {
         submitBtn.innerText = type === "login" ? "Login" : "Register";
     }
 
+    const loginAdmin = async () => {
+        const password = document.getElementById("admin_pass").value;
+
+        const res = await fetch("/admin/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password })
+        });
+
+        const data = await res.json();
+
+        alert(data.message || data.error);
+
+        if (res.ok) {
+            loadApproved();
+        }
+    };
+
     window.closeModal = () => {
         modal.classList.add("hidden");
     };
@@ -55,5 +73,53 @@ window.onload = () => {
         }
     }
 
+    async function loadApproved() {
+        const res = await fetch("/admin/approved");
+        const users = await res.json();
+
+        const list = document.getElementById("approved_list");
+        list.innerHTML = "";
+
+        users.forEach(u => {
+            const li = document.createElement("li");
+
+            li.innerHTML = `
+            ${u}
+            <button onclick="renameUser('${u}')">✏️</button>
+            <button onclick="deleteUser('${u}')">❌</button>
+        `;
+
+            list.appendChild(li);
+        });
+    }
+
+    async function renameUser(oldName) {
+        const newName = prompt("New username:");
+
+        if (!newName) return;
+
+        await fetch("/admin/rename", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ old_username: oldName, new_username: newName })
+        });
+
+        loadApproved();
+    }
+
+    async function deleteUser(username) {
+        await fetch("/admin/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username })
+        });
+
+        loadApproved();
+    }
+
+    window.loadApproved = loadApproved;
+    window.renameUser = renameUser;
+    window.deleteUser = deleteUser;
+    window.loginAdmin = loginAdmin;
     checkSession();
 };

@@ -206,6 +206,67 @@ def debug_users():
     conn.close()
     return jsonify(data)
 
+@app.route("/admin/approved", methods=["GET"])
+def admin_approved():
+    if not is_admin():
+        return jsonify({"error": "forbidden"}), 403
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+
+    c.execute("SELECT username FROM users WHERE status='approved'")
+    users = [row[0] for row in c.fetchall()]
+
+    conn.close()
+    return jsonify(users)
+
+@app.route("/admin/rename", methods=["POST"])
+def admin_rename():
+    if not is_admin():
+        return jsonify({"error": "forbidden"}), 403
+
+    old = request.json["old_username"]
+    new = request.json["new_username"].strip()
+
+    if not new:
+        return jsonify({"error": "invalid username"}), 400
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+
+    try:
+        c.execute("""
+            UPDATE users
+            SET username = ?
+            WHERE username = ?
+        """, (new, old))
+
+        conn.commit()
+
+    except sqlite3.IntegrityError:
+        return jsonify({"error": "username already exists"}), 400
+
+    finally:
+        conn.close()
+
+    return jsonify({"message": "renamed"})
+
+@app.route("/admin/delete", methods=["POST"])
+def admin_delete():
+    if not is_admin():
+        return jsonify({"error": "forbidden"}), 403
+
+    username = request.json["username"]
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+
+    c.execute("DELETE FROM users WHERE username = ?", (username,))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"message": "deleted"})
 # ---------------- RUN ----------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
