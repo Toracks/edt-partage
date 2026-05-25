@@ -102,7 +102,9 @@ body {
     height: 25px;
     border-radius: 5px;
     text-align: center;
-    justify-content: flex-start;
+    justify-content: space-between;
+    display: flex;
+    align-items: center;
 
     background: rgba(56, 56, 56, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.6);
@@ -119,4 +121,11 @@ body {
     border: 1px solid rgb(0, 150, 250);
     box-shadow: 0 5px 15px rgba(22, 22, 22, 0.2);
     color: white;
+}
+
+#list {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding-left: 20px;
 }
