@@ -129,7 +129,8 @@
                 body: JSON.stringify({ old_username: oldName, new_username: newName })
             });
 
-            loadApproved();
+            await loadApproved(); // IMPORTANT: attendre
+            await loadPending();  // optionnel
         }
 
         async function deleteUser(username) {
@@ -143,7 +144,8 @@
         }
 
         window.onload = () => {
-            console.log("Admin panel loaded");
+            loadPending();
+            loadApproved();
         };
     </script>
 

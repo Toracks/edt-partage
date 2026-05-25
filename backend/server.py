@@ -13,6 +13,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND = os.path.join(BASE_DIR, "..", "frontend")
 DB_PATH = os.path.join(BASE_DIR, "users.db")
 
+
 # ---------------- DB INIT ----------------
 def init_db():
     conn = sqlite3.connect(DB_PATH)
@@ -30,16 +31,20 @@ def init_db():
     conn.commit()
     conn.close()
 
+
 init_db()
+
 
 # ---------------- FRONTEND ----------------
 @app.route("/")
 def home():
     return send_from_directory(FRONTEND, "index.html")
 
+
 @app.route("/<path:path>")
 def static_files(path):
     return send_from_directory(FRONTEND, path)
+
 
 # ---------------- REGISTER ----------------
 @app.route("/register", methods=["POST"])
@@ -54,10 +59,13 @@ def register():
         conn = sqlite3.connect(DB_PATH, timeout=10)
         c = conn.cursor()
 
-        c.execute("""
+        c.execute(
+            """
             INSERT INTO users (username, password, status)
             VALUES (?, ?, 'pending')
-        """, (username, hashed))
+        """,
+            (username, hashed),
+        )
 
         conn.commit()
 
@@ -72,6 +80,8 @@ def register():
         conn.close()
 
     return jsonify({"message": "Account created"})
+
+
 # ---------------- LOGIN ----------------
 @app.route("/login", methods=["POST"])
 def login():
@@ -82,9 +92,12 @@ def login():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
 
-    c.execute("""
+    c.execute(
+        """
         SELECT password, status FROM users WHERE username=?
-    """, (username,))
+    """,
+        (username,),
+    )
 
     user = c.fetchone()
     conn.close()
@@ -105,6 +118,7 @@ def login():
 
     return jsonify({"message": "Logged in"})
 
+
 # ---------------- AUTO LOGIN CHECK ----------------
 @app.route("/me")
 def me():
@@ -124,10 +138,8 @@ def me():
         session.clear()
         return jsonify({"logged": False}), 401
 
-    return jsonify({
-        "logged": True,
-        "user": username
-    })
+    return jsonify({"logged": True, "user": username})
+
 
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
@@ -135,14 +147,17 @@ def logout():
     session.clear()
     return jsonify({"message": "Logged out"})
 
+
 # =====================================================
 # ================== ADMIN SYSTEM ======================
 # =====================================================
 
 ADMIN_PASSWORD = "Greninj@272010admin"
 
+
 def is_admin():
     return session.get("admin") is True
+
 
 # ---------------- ADMIN LOGIN ----------------
 @app.route("/admin/login", methods=["POST"])
@@ -154,6 +169,7 @@ def admin_login():
         return jsonify({"message": "admin connected"})
 
     return jsonify({"error": "forbidden"}), 403
+
 
 # ---------------- LIST PENDING USERS ----------------
 @app.route("/admin/pending", methods=["GET"])
@@ -171,6 +187,7 @@ def admin_pending():
 
     return jsonify(users)
 
+
 # ---------------- APPROVE USER ----------------
 @app.route("/admin/approve", methods=["POST"])
 def admin_approve():
@@ -182,15 +199,19 @@ def admin_approve():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
 
-    c.execute("""
+    c.execute(
+        """
         UPDATE users SET status='approved'
         WHERE username=?
-    """, (username,))
+    """,
+        (username,),
+    )
 
     conn.commit()
     conn.close()
 
     return jsonify({"message": "approved"})
+
 
 # ---------------- REJECT USER ----------------
 @app.route("/admin/reject", methods=["POST"])
@@ -210,6 +231,7 @@ def admin_reject():
 
     return jsonify({"message": "rejected"})
 
+
 @app.route("/debug/users")
 def debug_users():
     conn = sqlite3.connect(DB_PATH)
@@ -218,6 +240,7 @@ def debug_users():
     data = c.fetchall()
     conn.close()
     return jsonify(data)
+
 
 @app.route("/admin/approved", methods=["GET"])
 def admin_approved():
@@ -233,12 +256,13 @@ def admin_approved():
     conn.close()
     return jsonify(users)
 
+
 @app.route("/admin/rename", methods=["POST"])
 def admin_rename():
     if not is_admin():
         return jsonify({"error": "forbidden"}), 403
 
-    old = request.json["old_username"]
+    old = request.json["old_username"].strip()
     new = request.json["new_username"].strip()
 
     if not new:
@@ -254,6 +278,9 @@ def admin_rename():
             WHERE username = ?
         """, (new, old))
 
+        if c.rowcount == 0:
+            return jsonify({"error": "user not found"}), 404
+
         conn.commit()
 
     except sqlite3.IntegrityError:
@@ -264,27 +291,34 @@ def admin_rename():
 
     return jsonify({"message": "renamed"})
 
+
 @app.route("/admin/delete", methods=["POST"])
 def admin_delete():
     if not is_admin():
         return jsonify({"error": "forbidden"}), 403
 
-    username = request.json["username"]
+    username = request.json.get("username", "").strip()
 
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
 
     c.execute("DELETE FROM users WHERE username = ?", (username,))
 
+    if c.rowcount == 0:
+        conn.close()
+        return jsonify({"error": "user not found"}), 404
+
     conn.commit()
     conn.close()
 
     return jsonify({"message": "deleted"})
 
+
 @app.route("/debug/clear_session")
 def clear_session():
     session.clear()
     return "cleared"
+
 
 @app.route("/debug/raw_users")
 def raw_users():
@@ -295,6 +329,7 @@ def raw_users():
     conn.close()
     return jsonify(data)
 
+
 @app.route("/debug/approved")
 def debug_approved():
     conn = sqlite3.connect(DB_PATH)
@@ -303,6 +338,8 @@ def debug_approved():
     data = c.fetchall()
     conn.close()
     return jsonify(data)
+
+
 # ---------------- RUN ----------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
