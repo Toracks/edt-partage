@@ -38,8 +38,8 @@
             alert(data.message || data.error);
 
             if (res.ok) {
-                loadPending();
-                loadApproved();
+                await loadPending();
+                await loadApproved();
             }
         }
 
@@ -86,9 +86,64 @@
             loadPending();
         }
 
-        window.onload = () => {
-            loadPending();
+        async function test() {
+            const res = await fetch("/debug/approved");
+            console.log(await res.json());
+        }
+        test();
+
+        async function loadApproved() {
+            const res = await fetch("/admin/approved");
+
+            if (!res.ok) {
+                console.log("Not authorized or error:", res.status);
+                return;
+            }
+
+            const users = await res.json();
+
+            const list = document.getElementById("approved_list");
+            list.innerHTML = "";
+
+            users.forEach(u => {
+                const li = document.createElement("li");
+
+                li.innerHTML = `
+            ${u}
+            <button onclick="renameUser('${u}')">✏️</button>
+            <button onclick="deleteUser('${u}')">❌</button>
+        `;
+
+                list.appendChild(li);
+            });
+        }
+
+        async function renameUser(oldName) {
+            const newName = prompt("New username:");
+
+            if (!newName) return;
+
+            await fetch("/admin/rename", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ old_username: oldName, new_username: newName })
+            });
+
             loadApproved();
+        }
+
+        async function deleteUser(username) {
+            await fetch("/admin/delete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username })
+            });
+
+            loadApproved();
+        }
+
+        window.onload = () => {
+            console.log("Admin panel loaded");
         };
     </script>
 
