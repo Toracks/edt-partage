@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <title>Admin Panel</title>
+    <link rel="stylesheet" href="styleadmin.css">
 </head>
 <body>
 
 <h1>Admin Panel</h1>
 
-<input id="admin_pass" type="password" placeholder="Admin password">
-<button onclick="loginAdmin()">Login</button>
+<input id="admin_pass" class="admin_password" type="password" placeholder="Admin password">
+<button class="login_admin_btn" onclick="loginAdmin()">Login</button>
 
 <hr>
 
@@ -41,6 +42,7 @@ async function loadPending() {
 
     users.forEach(u => {
         const li = document.createElement("li");
+        li.classList.add("carré_validation");
 
         li.innerHTML = `
             ${u}
