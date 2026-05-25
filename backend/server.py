@@ -108,12 +108,25 @@ def login():
 # ---------------- AUTO LOGIN CHECK ----------------
 @app.route("/me")
 def me():
-    if "user" not in session:
+    username = session.get("user")
+
+    if not username:
+        return jsonify({"logged": False}), 401
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+
+    c.execute("SELECT username FROM users WHERE username=?", (username,))
+    user = c.fetchone()
+    conn.close()
+
+    if not user:
+        session.clear()
         return jsonify({"logged": False}), 401
 
     return jsonify({
         "logged": True,
-        "user": session["user"]
+        "user": username
     })
 
 # ---------------- LOGOUT ----------------
@@ -267,6 +280,20 @@ def admin_delete():
     conn.close()
 
     return jsonify({"message": "deleted"})
+
+@app.route("/debug/clear_session")
+def clear_session():
+    session.clear()
+    return "cleared"
+
+@app.route("/debug/raw_users")
+def raw_users():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT * FROM users")
+    data = c.fetchall()
+    conn.close()
+    return jsonify(data)
 # ---------------- RUN ----------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

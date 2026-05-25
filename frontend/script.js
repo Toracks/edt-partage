@@ -117,6 +117,7 @@ window.onload = () => {
         loadApproved();
     }
 
+
     window.loadApproved = loadApproved;
     window.renameUser = renameUser;
     window.deleteUser = deleteUser;
