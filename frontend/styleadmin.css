@@ -51,7 +51,7 @@ body {
     box-shadow: 0 5px 15px rgba(81, 255, 0, 0.8);
 }
 
-.carré_validation {
+.oui{
     width: 10px;
     height: 10px;
     border-radius: 5px;
@@ -67,7 +67,29 @@ body {
     transition: 0.25s;
 }
 
-.carré_validation:hover {
+.oui:hover {
+    background: rgba(61, 61, 61, 1);
+    border: 1px solid rgba(255, 255, 255, 1);
+    box-shadow: 0 5px 15px rgba(22, 22, 22, 0.3);
+}
+
+.non{
+    width: 10px;
+    height: 10px;
+    border-radius: 5px;
+    text-align: center;
+
+    background: rgba(61, 61, 61, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 5px 15px rgba(22, 22, 22, 0.1);
+    color: white;
+
+    cursor: pointer;
+    font-size: 15px;
+    transition: 0.25s;
+}
+
+.non:hover {
     background: rgba(61, 61, 61, 1);
     border: 1px solid rgba(255, 255, 255, 1);
     box-shadow: 0 5px 15px rgba(22, 22, 22, 0.3);

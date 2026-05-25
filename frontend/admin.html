@@ -46,8 +46,8 @@ async function loadPending() {
 
         li.innerHTML = `
             ${u}
-            <button onclick="approve('${u}')">✔</button>
-            <button onclick="reject('${u}')">❌</button>
+            <button class="oui" onclick="approve('${u}')">✔</button>
+            <button class="non" onclick="reject('${u}')">❌</button>
         `;
 
         list.appendChild(li);
