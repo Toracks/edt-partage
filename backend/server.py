@@ -329,6 +329,10 @@ def debug_approved():
     conn.close()
     return jsonify(data)
 
+@app.route("/admin/logout", methods=["POST", "GET"])
+def admin_logout():
+    session.pop("admin", None)
+    return jsonify({"message": "admin disconnected"})
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
