@@ -62,12 +62,11 @@ def register():
         conn.commit()
         conn.close()
 
-        return jsonify({
-            "message": "Account created, waiting admin approval"
-        })
+        return jsonify({"message": "Account created"})
 
-    except:
-        return jsonify({"error": "User already exists"}), 400
+    except Exception as e:
+        print("REGISTER ERROR:", e)   # 🔥 IMPORTANT
+        return jsonify({"error": str(e)}), 500
 
 # ---------------- LOGIN ----------------
 @app.route("/login", methods=["POST"])
