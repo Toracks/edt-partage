@@ -2,9 +2,11 @@ import os
 import sqlite3
 from datetime import timedelta
 from flask import Flask, request, jsonify, session, send_from_directory
+from werkzeug.security import generate_password_hash, check_password_hash
 
+# ---------------- APP INIT ----------------
 app = Flask(__name__)
-app.secret_key = "change_this_secret"
+app.secret_key = "32768:8:1$ikzSpC4pawAKjoHn$0150909b349048d9fc8ecf629b1f44ae02963ed64ec845ca0e2d6a1bccb4ef589c1433d1c227dcac25dfac4e1d41c0de0b197e41313e2b955454e8f509ab3294"
 app.permanent_session_lifetime = timedelta(days=30)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -15,19 +17,22 @@ DB_PATH = os.path.join(BASE_DIR, "users.db")
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
+
     c.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE,
-            password TEXT
+            password TEXT,
+            status TEXT DEFAULT 'pending'
         )
     """)
+
     conn.commit()
     conn.close()
 
 init_db()
 
-# ---------------- FRONT ----------------
+# ---------------- FRONTEND ----------------
 @app.route("/")
 def home():
     return send_from_directory(FRONTEND, "index.html")
@@ -43,15 +48,23 @@ def register():
     username = data["username"]
     password = data["password"]
 
+    hashed = generate_password_hash(password)
+
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        c.execute("INSERT INTO users (username, password) VALUES (?, ?)",
-                  (username, password))
+
+        c.execute("""
+            INSERT INTO users (username, password, status)
+            VALUES (?, ?, 'pending')
+        """, (username, hashed))
+
         conn.commit()
         conn.close()
 
-        return jsonify({"message": "User created"})
+        return jsonify({
+            "message": "Account created, waiting admin approval"
+        })
 
     except:
         return jsonify({"error": "User already exists"}), 400
@@ -65,20 +78,31 @@ def login():
 
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute("SELECT * FROM users WHERE username=? AND password=?",
-              (username, password))
+
+    c.execute("""
+        SELECT password, status FROM users WHERE username=?
+    """, (username,))
+
     user = c.fetchone()
     conn.close()
 
     if not user:
         return jsonify({"error": "Invalid credentials"}), 401
 
+    hashed_password, status = user
+
+    if not check_password_hash(hashed_password, password):
+        return jsonify({"error": "Invalid credentials"}), 401
+
+    if status != "approved":
+        return jsonify({"error": "Account not approved yet"}), 403
+
     session.permanent = True
     session["user"] = username
 
     return jsonify({"message": "Logged in"})
 
-# ---------------- ME (AUTO LOGIN CHECK) ----------------
+# ---------------- AUTO LOGIN CHECK ----------------
 @app.route("/me")
 def me():
     if "user" not in session:
@@ -94,6 +118,82 @@ def me():
 def logout():
     session.clear()
     return jsonify({"message": "Logged out"})
+
+# =====================================================
+# ================== ADMIN SYSTEM ======================
+# =====================================================
+
+ADMIN_PASSWORD_HASH = "32768:8:1$3xeBwRWXs7UaPF29$4f045cda3f9ff789c8f92c1a42a3085636ee446b60ac310cdbef3641b8e7eeb61ec61c9de106f261593376fea0e2c9d72599e8b4dbe3c9934a0068ca4a3a8983"
+
+def is_admin():
+    return session.get("admin") is True
+
+# ---------------- ADMIN LOGIN ----------------
+@app.route("/admin/login", methods=["POST"])
+def admin_login():
+    data = request.json
+
+
+    if check_password_hash(ADMIN_PASSWORD_HASH, data.get("password")):
+        session["admin"] = True
+        return jsonify({"message": "admin connected"})
+
+    return jsonify({"error": "forbidden"}), 403
+
+# ---------------- LIST PENDING USERS ----------------
+@app.route("/admin/pending", methods=["GET"])
+def admin_pending():
+    if not is_admin():
+        return jsonify({"error": "forbidden"}), 403
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+
+    c.execute("SELECT username FROM users WHERE status='pending'")
+    users = [row[0] for row in c.fetchall()]
+
+    conn.close()
+
+    return jsonify(users)
+
+# ---------------- APPROVE USER ----------------
+@app.route("/admin/approve", methods=["POST"])
+def admin_approve():
+    if not is_admin():
+        return jsonify({"error": "forbidden"}), 403
+
+    username = request.json["username"]
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+
+    c.execute("""
+        UPDATE users SET status='approved'
+        WHERE username=?
+    """, (username,))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"message": "approved"})
+
+# ---------------- REJECT USER ----------------
+@app.route("/admin/reject", methods=["POST"])
+def admin_reject():
+    if not is_admin():
+        return jsonify({"error": "forbidden"}), 403
+
+    username = request.json["username"]
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+
+    c.execute("DELETE FROM users WHERE username=?", (username,))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"message": "rejected"})
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
