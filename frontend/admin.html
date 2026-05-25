@@ -95,7 +95,10 @@
         async function loadApproved() {
             const res = await fetch("/admin/approved");
 
+
             const users = await res.json();
+
+            console.log(users);
 
             const list = document.getElementById("approved_list");
             list.innerHTML = "";
@@ -114,26 +117,41 @@
         }
 
         async function renameUser(id) {
+
             const newName = prompt("New username:");
             if (!newName) return;
 
-            await fetch("/admin/rename", {
+            const res = await fetch("/admin/rename", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id, new_username: newName })
+                body: JSON.stringify({
+                    id: id,
+                    new_username: newName
+                })
             });
 
-            loadApproved();
+            const data = await res.json();
+
+            console.log(data);
+
+            await loadApproved();
         }
 
         async function deleteUser(id) {
-            await fetch("/admin/delete", {
+
+            const res = await fetch("/admin/delete", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id })
+                body: JSON.stringify({
+                    id: id
+                })
             });
 
-            loadApproved();
+            const data = await res.json();
+
+            console.log(data);
+
+            await loadApproved();
         }
 
         window.onload = () => {
