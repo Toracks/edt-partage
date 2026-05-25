@@ -31,6 +31,7 @@ window.onload = () => {
         alert(data.message || data.error);
 
         if (res.ok) {
+            loadPending();
             loadApproved();
         }
     };

@@ -294,6 +294,15 @@ def raw_users():
     data = c.fetchall()
     conn.close()
     return jsonify(data)
+
+@app.route("/debug/approved")
+def debug_approved():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT username, status FROM users")
+    data = c.fetchall()
+    conn.close()
+    return jsonify(data)
 # ---------------- RUN ----------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

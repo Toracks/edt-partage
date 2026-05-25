@@ -37,7 +37,10 @@
             const data = await res.json();
             alert(data.message || data.error);
 
-            if (res.ok) loadPending();
+            if (res.ok) {
+                loadPending();
+                loadApproved();
+            }
         }
 
         async function loadPending() {
@@ -82,6 +85,11 @@
 
             loadPending();
         }
+
+        window.onload = () => {
+            loadPending();
+            loadApproved();
+        };
     </script>
 
 </body>
