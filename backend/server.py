@@ -133,8 +133,7 @@ def is_admin():
 def admin_login():
     data = request.json
 
-
-    if check_password_hash(ADMIN_PASSWORD, data.get("password")):
+    if data.get("password") == ADMIN_PASSWORD:
         session["admin"] = True
         return jsonify({"message": "admin connected"})
 
