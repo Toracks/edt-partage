@@ -95,11 +95,6 @@
         async function loadApproved() {
             const res = await fetch("/admin/approved");
 
-            if (!res.ok) {
-                console.log("Not authorized or error:", res.status);
-                return;
-            }
-
             const users = await res.json();
 
             const list = document.getElementById("approved_list");
@@ -109,35 +104,33 @@
                 const li = document.createElement("li");
 
                 li.innerHTML = `
-            ${u}
-            <button onclick="renameUser('${u}')">✏️</button>
-            <button onclick="deleteUser('${u}')">❌</button>
+            ${u.username}
+            <button onclick="renameUser(${u.id})">✏️</button>
+            <button onclick="deleteUser(${u.id})">❌</button>
         `;
 
                 list.appendChild(li);
             });
         }
 
-        async function renameUser(oldName) {
+        async function renameUser(id) {
             const newName = prompt("New username:");
-
             if (!newName) return;
 
             await fetch("/admin/rename", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ old_username: oldName, new_username: newName })
+                body: JSON.stringify({ id, new_username: newName })
             });
 
-            await loadApproved(); // IMPORTANT: attendre
-            await loadPending();  // optionnel
+            loadApproved();
         }
 
-        async function deleteUser(username) {
+        async function deleteUser(id) {
             await fetch("/admin/delete", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username })
+                body: JSON.stringify({ id })
             });
 
             loadApproved();

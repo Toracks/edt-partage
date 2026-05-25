@@ -250,8 +250,8 @@ def admin_approved():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
 
-    c.execute("SELECT username FROM users WHERE status='approved'")
-    users = [row[0] for row in c.fetchall()]
+    c.execute("SELECT id, username FROM users WHERE status='approved'")
+    users = [{"id": row[0], "username": row[1]} for row in c.fetchall()]
 
     conn.close()
     return jsonify(users)
@@ -262,11 +262,8 @@ def admin_rename():
     if not is_admin():
         return jsonify({"error": "forbidden"}), 403
 
-    old = request.json["old_username"].strip()
+    user_id = request.json["id"]
     new = request.json["new_username"].strip()
-
-    if not new:
-        return jsonify({"error": "invalid username"}), 400
 
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -275,11 +272,8 @@ def admin_rename():
         c.execute("""
             UPDATE users
             SET username = ?
-            WHERE username = ?
-        """, (new, old))
-
-        if c.rowcount == 0:
-            return jsonify({"error": "user not found"}), 404
+            WHERE id = ?
+        """, (new, user_id))
 
         conn.commit()
 
@@ -297,16 +291,12 @@ def admin_delete():
     if not is_admin():
         return jsonify({"error": "forbidden"}), 403
 
-    username = request.json.get("username", "").strip()
+    user_id = request.json["id"]
 
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
 
-    c.execute("DELETE FROM users WHERE username = ?", (username,))
-
-    if c.rowcount == 0:
-        conn.close()
-        return jsonify({"error": "user not found"}), 404
+    c.execute("DELETE FROM users WHERE id = ?", (user_id,))
 
     conn.commit()
     conn.close()
