@@ -149,18 +149,3 @@ body {
     display: none;
 }
 
-.admin_password{
-    width: 100px;
-    height: 10px;
-    border-radius: 15px;
-    text-align: center;
-
-    background: rgba(0, 153, 255, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    box-shadow: 0 5px 15px rgba(0, 153, 255, 0.1);
-    color: white;
-
-    cursor: pointer;
-    font-size: 15px;
-    transition: 0.25s ease;
-}

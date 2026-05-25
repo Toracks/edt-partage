@@ -1,79 +1,84 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <title>Admin Panel</title>
     <link rel="stylesheet" href="styleadmin.css">
 </head>
+
 <body>
 
-<h1>Admin Panel</h1>
+    <h1>Admin Panel</h1>
 
-<input id="admin_pass" class="admin_password" type="password" placeholder="Admin password">
-<button class="login_admin_btn" onclick="loginAdmin()">Login</button>
+    <input id="admin_pass" class="admin_password" type="password" placeholder="Admin password">
+    <button class="login_admin_btn" onclick="loginAdmin()">Login</button>
 
-<hr>
+    <hr>
 
-<h2>Pending users</h2>
-<ul id="list"></ul>
+    <h2>Pending users</h2>
+    <ul id="list"></ul>
 
-<script>
-async function loginAdmin() {
-    const password = document.getElementById("admin_pass").value;
+    <script>
+        async function loginAdmin() {
+            const password = document.getElementById("admin_pass").value;
 
-    const res = await fetch("/admin/login", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({password})
-    });
+            const res = await fetch("/admin/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ password })
+            });
 
-    const data = await res.json();
-    alert(data.message || data.error);
+            const data = await res.json();
+            alert(data.message || data.error);
 
-    if (res.ok) loadPending();
-}
+            if (res.ok) loadPending();
+        }
 
-async function loadPending() {
-    const res = await fetch("/admin/pending");
-    const users = await res.json();
+        async function loadPending() {
+            const res = await fetch("/admin/pending");
+            const users = await res.json();
 
-    const list = document.getElementById("list");
-    list.innerHTML = "";
+            const list = document.getElementById("list");
+            list.innerHTML = "";
 
-    users.forEach(u => {
-        const li = document.createElement("li");
-        li.classList.add("users");
+            users.forEach(u => {
+                const li = document.createElement("li");
+                li.classList.add("users");
 
-        li.innerHTML = `
-            ${u}
-            <button class="oui" onclick="approve('${u}')">✔</button>
-            <button class="non" onclick="reject('${u}')">❌</button>
-        `;
+                li.innerHTML = `
+                    <span class="username">${u}</span>
+                <div class="actions">
+                    <button class="oui" onclick="approve('${u}')">✔</button>
+                    <button class="non" onclick="reject('${u}')">❌</button>
+                </div>
+`;
 
-        list.appendChild(li);
-    });
-}
+                list.appendChild(li);
+            });
+        }
 
-async function approve(username) {
-    await fetch("/admin/approve", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({username})
-    });
+        async function approve(username) {
+            await fetch("/admin/approve", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username })
+            });
 
-    loadPending();
-}
+            loadPending();
+        }
 
-async function reject(username) {
-    await fetch("/admin/reject", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({username})
-    });
+        async function reject(username) {
+            await fetch("/admin/reject", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username })
+            });
 
-    loadPending();
-}
-</script>
+            loadPending();
+        }
+    </script>
 
 </body>
+
 </html>
