@@ -123,7 +123,7 @@ def logout():
 # ================== ADMIN SYSTEM ======================
 # =====================================================
 
-ADMIN_PASSWORD_HASH = "Greninj@272010admin"
+ADMIN_PASSWORD = "Greninj@272010admin"
 
 def is_admin():
     return session.get("admin") is True
@@ -134,7 +134,7 @@ def admin_login():
     data = request.json
 
 
-    if check_password_hash(ADMIN_PASSWORD_HASH, data.get("password")):
+    if check_password_hash(ADMIN_PASSWORD, data.get("password")):
         session["admin"] = True
         return jsonify({"message": "admin connected"})
 
