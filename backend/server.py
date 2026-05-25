@@ -182,17 +182,26 @@ def admin_reject():
     if not is_admin():
         return jsonify({"error": "forbidden"}), 403
 
-    username = request.json["username"]
+    username = request.json["username"].strip()
 
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
 
-    c.execute("DELETE FROM users WHERE username=?", (username,))
+    c.execute("DELETE FROM users WHERE username = ?", (username,))
 
     conn.commit()
     conn.close()
 
     return jsonify({"message": "rejected"})
+
+@app.route("/debug/users")
+def debug_users():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT id, username, status FROM users")
+    data = c.fetchall()
+    conn.close()
+    return jsonify(data)
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":

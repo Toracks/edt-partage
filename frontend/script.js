@@ -57,3 +57,12 @@ window.onload = () => {
 
     checkSession();
 };
+
+@app.route("/debug/users")
+def debug_users():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT id, username, status FROM users")
+    data = c.fetchall()
+    conn.close()
+    return jsonify(data)
