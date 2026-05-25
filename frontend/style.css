@@ -4,19 +4,118 @@ body {
     color: white;
     text-align: center;
     margin-top: 50px;
+    justify-content: center;
+    align-items: center;
+    display: flex;
 }
 
 .topbar{
     position: fixed;
     left: 0;
     top: 0;
-    height: 20px;
+    height: 60px;
     width: 100%;
+    gap: 20px;
 
     display: flex;
     align-items: center;
     justify-content: flex-end;
-
-    gap: 20px;
+    transition: 0.2s;
+    
     background: rgba(51, 51, 51, 0.8);
+    border-radius: 0 0 20px 20px;
+    border-bottom: 2px solid rgba(0, 140, 255, 0.8);
+    box-shadow: 0 5px 20px rgba(0, 162, 255, 0.8);
+}
+
+.topbar:hover{
+    border-bottom: 2px solid rgba(0, 140, 255, 1);
+    box-shadow: 0 10px 20px rgba(0, 162, 255, 1);
+    background: rgba(51, 51, 51, 1);
+}
+
+.topbar .login_btn{
+    margin-right: 2%;
+    width: 10%;
+    height: 50px;
+    border-radius: 15px;
+    background: rgba(43, 255, 0, 0.6);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 5px 15px rgba(0, 255, 0, 0.4);
+    cursor: pointer;
+    text-align: center;
+    font-size: 15px;
+    transition: 0.25s ease;
+}
+
+.topbar .login_btn:hover{
+    background: rgba(43, 255, 0, 1);
+    border: 1px solid rgba(255, 255, 255, 1);
+    box-shadow: 0 5px 15px rgba(0, 255, 0, 1);
+}
+
+.topbar .signin_btn{
+    width: 10%;
+    height: 50px;
+    border-radius: 15px;
+    text-align: center;
+
+    background: rgba(0, 153, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 5px 15px rgba(0, 153, 255, 0.1);
+    color: white;
+
+    cursor: pointer;
+    font-size: 15px;
+    transition: 0.25s ease;
+}
+
+.topbar .signin_btn:hover{
+    background: rgba(0, 153, 255, 1);
+    border: 1px solid rgba(255, 255, 255, 1);
+    box-shadow: 0 5px 15px rgba(0, 153, 155, 1);
+}
+
+.title{
+    color: rgba(255, 255, 255,);
+    font-size: 50px;
+    transition: 0.2s;
+    cursor: pointer;
+}
+
+.title:hover{
+    color: rgba(255, 255, 255,);
+}
+
+.topbar .setting_btn{
+    margin-right: auto;
+    margin-left: 2%;
+    width: 10%;
+    height: 50px;
+    border-radius: 15px;
+    text-align: center;
+
+    background: rgba(0, 153, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 5px 15px rgba(0, 153, 255, 0.1);
+    color: white;
+
+    cursor: pointer;
+    font-size: 15px;
+    transition: 0.25s ease;
+}
+
+.topbar .setting_btn:hover{
+    background: rgba(0, 153, 255, 1);
+    border: 1px solid rgba(255, 255, 255, 1);
+    box-shadow: 0 5px 15px rgba(0, 153, 155, 1);
+}
+
+.page{
+    transition: 0.2s;
+}
+
+.topbar:hover ~ .page{
+    opacity: 0.5;
 }
