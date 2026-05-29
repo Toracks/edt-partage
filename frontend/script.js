@@ -58,15 +58,7 @@ window.onload = () => {
 
         if (res.ok && mode === "login") {
             closeModal();
-            document.getElementById("login_btn").style.display = "none";
-            document.getElementById("signin_btn").style.display = "none";
-            document.getElementById("calendar").style.display = "block";
-            document.querySelector(".page").style.display = "none";
-            calendar.render();
-            calendar.updateSize();
-
-        } else {
-            document.getElementById("calendar").style.display = "none";
+            showApp();
         }
     });
 
@@ -74,37 +66,40 @@ window.onload = () => {
         const res = await fetch("/me");
 
         if (res.ok) {
-            document.getElementById("login_btn").style.display = "none";
-            document.getElementById("signin_btn").style.display = "none";
-            document.querySelector(".page").style.display = "none";
-            document.getElementById("calendar").style.display = "block";
+            showApp();
+        } else {
+            document.getElementById("calendar").style.display = "none";
         }
     }
 
     const calendarEl = document.getElementById('calendar');
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
-
         initialView: 'dayGridMonth',
-
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
             right: 'timeGridDay,timeGridWeek,dayGridMonth,multiMonthYear'
         },
-
         locale: 'fr',
-
         selectable: true,
-
         navLinks: true,
-
         editable: false,
-
         dayMaxEvents: true
     });
 
-    // ❌ NE PAS exporter des fonctions qui n’existent pas
+    function showApp() {
+        document.getElementById("login_btn").style.display = "none";
+        document.getElementById("signin_btn").style.display = "none";
+
+        document.querySelector(".page").style.display = "none"; // <-- cache le H1
+
+        document.getElementById("calendar").style.display = "block";
+
+        calendar.render(); // <-- IMPORTANT
+    }
+
+
     window.loginAdmin = loginAdmin;
 
     checkSession();

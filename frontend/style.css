@@ -172,28 +172,33 @@ body {
 
 .fc {
     color: white;
+    text-transform: capitalize !important;
 }
 
 .fc-toolbar-title {
     color: white;
     font-size: 28px !important;
+    text-transform: capitalize !important;
 }
 
-.fc-button {
-    background: rgba(0, 153, 255, 0.7) !important;
-    border: none !important;
 
+.fc-button {
+    background: rgba(72, 255, 0, 0.5) !important;
+    border: 1px solid rgba(255, 255, 255, 0.7) !important;
+    margin: 0 4px !important;
     border-radius: 10px !important;
+    text-transform: capitalize !important;
 
     transition: 0.2s;
 }
 
 .fc-button:hover {
-    background: rgba(0, 153, 255, 1) !important;
+    background: rgba(72, 255, 0, 0.8) !important;
+    box-shadow: 0 5px 5px rgba(72, 255, 0, 8) !important;
 }
 
 .fc-button-active {
-    background: rgba(0, 100, 255, 1) !important;
+    background: rgba(72, 255, 0, 1) !important;
 }
 
 .fc-theme-standard td,
