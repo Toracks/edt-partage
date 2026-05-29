@@ -61,6 +61,7 @@ window.onload = () => {
             document.getElementById("login_btn").style.display = "none";
             document.getElementById("signin_btn").style.display = "none";
             document.getElementById("calendar").style.display = "block";
+            document.querySelector(".page").style.display = "none";
             calendar.render();
             calendar.updateSize();
 
@@ -75,6 +76,8 @@ window.onload = () => {
         if (res.ok) {
             document.getElementById("login_btn").style.display = "none";
             document.getElementById("signin_btn").style.display = "none";
+            document.querySelector(".page").style.display = "none";
+            document.getElementById("calendar").style.display = "block";
         }
     }
 
