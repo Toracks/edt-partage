@@ -61,6 +61,8 @@ window.onload = () => {
             document.getElementById("login_btn").style.display = "none";
             document.getElementById("signin_btn").style.display = "none";
             document.getElementById("calendar").style.display = "block";
+            calendar.render();
+            calendar.updateSize();
 
         } else {
             document.getElementById("calendar").style.display = "none";
@@ -76,32 +78,27 @@ window.onload = () => {
         }
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
+    const calendarEl = document.getElementById('calendar');
 
-        const calendarEl = document.getElementById('calendar');
+    const calendar = new FullCalendar.Calendar(calendarEl, {
 
-        const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
 
-            initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'timeGridDay,timeGridWeek,dayGridMonth,multiMonthYear'
+        },
 
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'timeGridDay,timeGridWeek,dayGridMonth,multiMonthYear'
-            },
+        locale: 'fr',
 
-            locale: 'fr',
+        selectable: true,
 
-            selectable: true,
+        navLinks: true,
 
-            navLinks: true,
+        editable: false,
 
-            editable: false,
-
-            dayMaxEvents: true
-        });
-
-        calendar.render();
+        dayMaxEvents: true
     });
 
     // ❌ NE PAS exporter des fonctions qui n’existent pas

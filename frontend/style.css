@@ -152,7 +152,6 @@ body {
 #calendar{
     display: none;
     width: 95%;
-    height: 90vh;
     margin: auto;
     margin-top: 2%;
     background: rgba(20,20,20,0.9);
