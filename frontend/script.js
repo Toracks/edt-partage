@@ -75,17 +75,51 @@ window.onload = () => {
     const calendarEl = document.getElementById('calendar');
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
+
         initialView: 'dayGridMonth',
+
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
-            right: 'timeGridDay,timeGridWeek,dayGridMonth,multiMonthYear'
+            right: 'timeGridDay,timeGridWeek,dayGridMonth'
         },
+
         locale: 'fr',
+
         selectable: true,
+        selectMirror: true,
+
         navLinks: true,
         editable: false,
-        dayMaxEvents: true
+        dayMaxEvents: true,
+
+        
+        dateClick: function (info) {
+            const title = prompt("Nom de l'événement :");
+
+            if (!title) return;
+
+            calendar.addEvent({
+                title: title,
+                start: info.date,
+                allDay: true
+            });
+        },
+
+        
+        select: function (info) {
+            const title = prompt("Nom de l'événement :");
+
+            if (!title) return;
+
+            calendar.addEvent({
+                title: title,
+                start: info.start,
+                end: info.end
+            });
+
+            calendar.unselect();
+        }
     });
 
     function showApp() {

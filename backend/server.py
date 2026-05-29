@@ -19,12 +19,25 @@ def init_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
 
+    # TABLE USERS (déjà existante)
     c.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE,
             password TEXT,
             status TEXT DEFAULT 'pending'
+        )
+    """)
+
+    # 🆕 TABLE EVENTS (à ajouter)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT,
+            description TEXT,
+            start TEXT,
+            end TEXT,
+            all_day INTEGER DEFAULT 0
         )
     """)
 
@@ -269,11 +282,14 @@ def admin_rename():
     c = conn.cursor()
 
     try:
-        c.execute("""
+        c.execute(
+            """
             UPDATE users
             SET username = ?
             WHERE id = ?
-        """, (new, user_id))
+        """,
+            (new, user_id),
+        )
 
         conn.commit()
 
@@ -329,10 +345,58 @@ def debug_approved():
     conn.close()
     return jsonify(data)
 
+
 @app.route("/admin/logout", methods=["POST", "GET"])
 def admin_logout():
     session.pop("admin", None)
     return jsonify({"message": "admin disconnected"})
+
+@app.route("/events", methods=["GET"])
+def get_events():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+
+    c.execute("SELECT id, title, description, start, end, all_day FROM events")
+    rows = c.fetchall()
+    conn.close()
+
+    events = []
+
+    for r in rows:
+        events.append({
+            "id": r[0],
+            "title": r[1],
+            "description": r[2],
+            "start": r[3],
+            "end": r[4],
+            "allDay": bool(r[5])
+        })
+
+    return jsonify(events)
+
+@app.route("/events", methods=["POST"])
+def add_event():
+    data = request.json
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+
+    c.execute("""
+        INSERT INTO events (title, description, start, end, all_day)
+        VALUES (?, ?, ?, ?, ?)
+    """, (
+        data["title"],
+        data["description"],
+        data["start"],
+        data["end"],
+        int(data.get("allDay", 0))
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"message": "event created"})
+
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
