@@ -60,6 +60,10 @@ window.onload = () => {
             closeModal();
             document.getElementById("login_btn").style.display = "none";
             document.getElementById("signin_btn").style.display = "none";
+            document.getElementById("calendar").style.display = "block";
+
+        } else {
+            document.getElementById("calendar").style.display = "none";
         }
     });
 
