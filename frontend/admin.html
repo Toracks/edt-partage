@@ -163,7 +163,23 @@
         }
 
         window.onload = () => {
+
             document.getElementById("admin_content").style.display = "none";
+
+            setInterval(async () => {
+
+                const content = document.getElementById("admin_content");
+
+                // uniquement si admin connecté
+                if (content.style.display === "block") {
+
+                    await loadPending();
+                    await loadApproved();
+
+                    console.log("Admin panel updated");
+                }
+
+            }, 3000); // toutes les 3 secondes
         };
     </script>
 
