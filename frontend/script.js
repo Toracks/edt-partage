@@ -72,6 +72,34 @@ window.onload = () => {
         }
     }
 
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const calendarEl = document.getElementById('calendar');
+
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+
+            initialView: 'dayGridMonth',
+
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'timeGridDay,timeGridWeek,dayGridMonth,multiMonthYear'
+            },
+
+            locale: 'fr',
+
+            selectable: true,
+
+            navLinks: true,
+
+            editable: false,
+
+            dayMaxEvents: true
+        });
+
+        calendar.render();
+    });
+
     // ❌ NE PAS exporter des fonctions qui n’existent pas
     window.loginAdmin = loginAdmin;
 
