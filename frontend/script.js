@@ -63,7 +63,7 @@ window.onload = () => {
         headerToolbar: {
             left: "prev,next today addEvent",
             center: "title",
-            right: "timeGridDay,timeGridWeek,dayGridMonth"
+            right: "timeGridDay,timeGridWeek,dayGridMonth,dayGridWeek" // ajoute dayGridWeek
         },
 
         customButtons: {
@@ -73,7 +73,7 @@ window.onload = () => {
             }
         },
 
-        initialView: "timeGridWeek",
+        initialView: "dayGridWeek",
         editable: false,
         navLinks: true,
         dayMaxEvents: false,
@@ -82,12 +82,6 @@ window.onload = () => {
         slotEventOverlap: false,
         dayMaxEventRows: false,
         eventMaxStack: 999,
-
-        eventTimeFormat: {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false
-        },
 
         eventOrder: "start,-duration,title",
 

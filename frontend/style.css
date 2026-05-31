@@ -255,27 +255,29 @@ body {
 }
 
 
+
+
 .fc-daygrid-day-events {
-    display: block !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px !important;
 }
 
-.fc-daygrid-event-harness {
-    display: block !important;
-    width: 100% !important;
-}
-
+.fc-daygrid-event-harness,
 .fc-daygrid-event-harness-inset {
-    display: block !important;
     width: 100% !important;
+    margin: 0 !important;
+    inset: unset !important;  
+    position: relative !important;
 }
 
 .fc-daygrid-event {
-    display: block !important;
     width: 100% !important;
+    white-space: normal !important;
+    margin: 0 !important;
 }
 
 .fc-event {
-    display: block !important;
     width: 100% !important;
-    margin-bottom: 4px !important;
+    margin-bottom: 0 !important;
 }
