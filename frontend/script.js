@@ -28,6 +28,7 @@ window.onload = () => {
 
         const res = await fetch(mode === "login" ? "/login" : "/register", {
             method: "POST",
+            credentials: "same-origin",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, password })
         });
@@ -36,13 +37,16 @@ window.onload = () => {
         alert(data.message || data.error);
 
         if (res.ok && mode === "login") {
+            const meRes = await fetch("/me", { credentials: "same-origin" });
+            const meData = await meRes.json();
+            userColor = meData.color || "#3788d8";
             closeModal();
             showApp();
         }
     };
 
     async function checkSession() {
-        const res = await fetch("/me");
+        const res = await fetch("/me", { credentials: "same-origin" });
         if (res.ok) {
             const data = await res.json();
             userColor = data.color || "#3788d8";
@@ -64,7 +68,11 @@ window.onload = () => {
         initialView: "dayGridWeek",
         timeZone: "local",
 
-        events: "/events",
+        events: {
+            url: "/events",
+            extraParams: () => ({}),
+            failure: () => console.error("Erreur chargement events")
+        },
 
         headerToolbar: {
             left: "prev,next today addEvent",
@@ -81,7 +89,6 @@ window.onload = () => {
 
         locale: "fr",
         dayHeaderFormat: { weekday: "long", day: "2-digit", month: "2-digit" },
-        initialView: "dayGridWeek",
         editable: false,
         navLinks: true,
         dayMaxEvents: false,
@@ -89,6 +96,7 @@ window.onload = () => {
         eventOverlap: false,
         slotEventOverlap: false,
         eventMaxStack: 999,
+
         views: {
             dayGridMonth: {
                 dayMaxEvents: 3,
@@ -117,21 +125,17 @@ window.onload = () => {
     const deleteBtn = document.getElementById("event_delete");
 
     function fill(e) {
-
         const s = new Date(e.start);
         const en = e.end ? new Date(e.end) : new Date(s.getTime() + 3600000);
 
         eventDate.value = s.toISOString().split("T")[0];
-
         sh.value = s.getHours();
         sm.value = s.getMinutes();
-
         eh.value = en.getHours();
         em.value = en.getMinutes();
     }
 
     function buildDate() {
-
         const d = eventDate.value;
 
         const start = new Date(d);
@@ -144,27 +148,21 @@ window.onload = () => {
     }
 
     function openModalEvent(event) {
-
         eventModal.classList.remove("hidden");
 
         if (event) {
             editingEvent = event;
-
             eventTitle.value = event.title;
             fill(event);
-
             deleteBtn.style.display = "inline-block";
         } else {
             editingEvent = null;
-
             eventTitle.value = "";
 
             const now = new Date();
             eventDate.value = now.toISOString().split("T")[0];
-
             sh.value = now.getHours();
             sm.value = 0;
-
             eh.value = now.getHours() + 1;
             em.value = 0;
 
@@ -187,28 +185,18 @@ window.onload = () => {
         const { start, end } = buildDate();
 
         if (editingEvent) {
-
             await fetch("/events/update", {
                 method: "POST",
+                credentials: "same-origin",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    id: editingEvent.id,
-                    title,
-                    start,
-                    end
-                })
+                body: JSON.stringify({ id: editingEvent.id, title, start, end })
             });
-
         } else {
-
             await fetch("/events", {
                 method: "POST",
+                credentials: "same-origin",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    title,
-                    start,
-                    end
-                })
+                body: JSON.stringify({ title, start, end })
             });
         }
 
@@ -219,11 +207,11 @@ window.onload = () => {
     // ---------------- DELETE ----------------
 
     deleteBtn.onclick = async () => {
-
         if (!editingEvent) return;
 
         await fetch("/events/delete", {
             method: "POST",
+            credentials: "same-origin",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id: editingEvent.id })
         });
@@ -233,17 +221,7 @@ window.onload = () => {
         closeEventModal();
     };
 
-    // ---------------- APP ----------------
-
-    function showApp() {
-        document.getElementById("login_btn").style.display = "none";
-        document.getElementById("signin_btn").style.display = "none";
-        document.querySelector(".page").style.display = "none";
-        document.getElementById("calendar").style.display = "block";
-
-        calendar.render();
-    }
-
+    // ---------------- SETTINGS ----------------
 
     document.getElementById("setting_btn").onclick = () => {
         const input = document.createElement("input");
@@ -255,6 +233,7 @@ window.onload = () => {
 
             await fetch("/me/color", {
                 method: "POST",
+                credentials: "same-origin",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ color: userColor })
             });
@@ -264,6 +243,17 @@ window.onload = () => {
 
         input.click();
     };
+
+    // ---------------- APP ----------------
+
+    function showApp() {
+        document.getElementById("login_btn").style.display = "none";
+        document.getElementById("signin_btn").style.display = "none";
+        document.querySelector(".page").style.display = "none";
+        document.getElementById("calendar").style.display = "block";
+        calendar.render();
+    }
+
     // ---------------- START ----------------
     checkSession();
 };
