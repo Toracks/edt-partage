@@ -428,6 +428,36 @@ def debug_approved():
     conn.close()
     return jsonify(data)
 
+@app.route("/init-db")
+def init_db_route():
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE,
+            password TEXT,
+            status TEXT DEFAULT 'pending'
+        )
+    """)
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS events (
+            id SERIAL PRIMARY KEY,
+            title TEXT,
+            description TEXT,
+            start TEXT,
+            end TEXT,
+            all_day INTEGER DEFAULT 0
+        )
+    """)
+
+    conn.commit()
+    conn.close()
+
+    return "DB initialized"
+
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
