@@ -43,8 +43,13 @@ window.onload = () => {
 
     async function checkSession() {
         const res = await fetch("/me");
-        if (res.ok) showApp();
-        else document.getElementById("calendar").style.display = "none";
+        if (res.ok) {
+            const data = await res.json();
+            userColor = data.color || "#3788d8";
+            showApp();
+        } else {
+            document.getElementById("calendar").style.display = "none";
+        }
     }
 
     // ---------------- CALENDAR ----------------
@@ -52,6 +57,7 @@ window.onload = () => {
     const calendarEl = document.getElementById("calendar");
 
     let editingEvent = null;
+    let userColor = "#3788d8";
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
 
@@ -238,6 +244,26 @@ window.onload = () => {
         calendar.render();
     }
 
+
+    document.getElementById("setting_btn").onclick = () => {
+        const input = document.createElement("input");
+        input.type = "color";
+        input.value = userColor;
+
+        input.oninput = async (e) => {
+            userColor = e.target.value;
+
+            await fetch("/me/color", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ color: userColor })
+            });
+
+            await calendar.refetchEvents();
+        };
+
+        input.click();
+    };
     // ---------------- START ----------------
     checkSession();
 };

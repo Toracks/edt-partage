@@ -43,7 +43,7 @@ def static_files(path):
 
 
 # =====================================================
-# AUTH SYSTEM (INCHANGED LOGIC)
+# AUTH SYSTEM
 # =====================================================
 
 @app.route("/register", methods=["POST"])
@@ -108,7 +108,29 @@ def me():
     if not session.get("user"):
         return jsonify({"logged": False}), 401
 
-    return jsonify({"logged": True})
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT color FROM users WHERE username=%s", (session["user"],))
+    row = c.fetchone()
+    conn.close()
+
+    return jsonify({"logged": True, "color": row[0] if row else "#3788d8"})
+
+
+@app.route("/me/color", methods=["POST"])
+def update_color():
+    if not session.get("user"):
+        return jsonify({"error": "not logged"}), 401
+
+    color = request.json.get("color", "#3788d8")
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE users SET color=%s WHERE username=%s", (color, session["user"]))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"message": "ok"})
 
 
 @app.route("/logout")
@@ -118,7 +140,7 @@ def logout():
 
 
 # =====================================================
-# ADMIN SYSTEM (UNCHANGED)
+# ADMIN SYSTEM
 # =====================================================
 
 ADMIN_PASSWORD = "Greninj@272010admin"
@@ -241,11 +263,10 @@ def admin_rename():
 
 
 # =====================================================
-# EVENTS SYSTEM (FIX COMPLET + STABLE)
+# EVENTS SYSTEM
 # =====================================================
 
 def to_iso(v):
-    """FullCalendar FIX: always ISO format"""
     if not v:
         return None
     return str(v).replace(" ", "T")
@@ -257,7 +278,7 @@ def get_events():
     c = conn.cursor()
 
     c.execute("""
-        SELECT id, title, description, start_time, end_time, all_day
+        SELECT id, title, description, start_time, end_time, all_day, color
         FROM events
         ORDER BY start_time
     """)
@@ -272,7 +293,8 @@ def get_events():
             "description": r[2],
             "start": to_iso(r[3]),
             "end": to_iso(r[4]),
-            "allDay": bool(r[5])
+            "allDay": bool(r[5]),
+            "color": r[6] or "#3788d8"
         }
         for r in rows
     ])
@@ -280,20 +302,28 @@ def get_events():
 
 @app.route("/events", methods=["POST"])
 def add_event():
+    if not session.get("user"):
+        return jsonify({"error": "not logged"}), 401
+
     data = request.json
 
     conn = get_db()
     c = conn.cursor()
 
+    c.execute("SELECT color FROM users WHERE username=%s", (session["user"],))
+    row = c.fetchone()
+    color = row[0] if row else "#3788d8"
+
     c.execute("""
-        INSERT INTO events (title, description, start_time, end_time, all_day)
-        VALUES (%s, %s, %s, %s, %s)
+        INSERT INTO events (title, description, start_time, end_time, all_day, color)
+        VALUES (%s, %s, %s, %s, %s, %s)
     """, (
         data["title"],
         data.get("description", ""),
         data["start"],
         data["end"],
-        int(data.get("allDay", 0))
+        int(data.get("allDay", 0)),
+        color
     ))
 
     conn.commit()
@@ -405,7 +435,8 @@ def init_db():
             id SERIAL PRIMARY KEY,
             username TEXT UNIQUE,
             password TEXT,
-            status TEXT DEFAULT 'pending'
+            status TEXT DEFAULT 'pending',
+            color TEXT DEFAULT '#3788d8'
         )
     """)
 
@@ -416,7 +447,8 @@ def init_db():
             description TEXT,
             start_time TEXT,
             end_time TEXT,
-            all_day INTEGER DEFAULT 0
+            all_day INTEGER DEFAULT 0,
+            color TEXT DEFAULT '#3788d8'
         )
     """)
 
