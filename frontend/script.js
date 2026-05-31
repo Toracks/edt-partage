@@ -37,17 +37,21 @@ window.onload = () => {
             const meData = await meRes.json();
             if (meData.logged) {
                 userColor = meData.color || "#3788d8";
+                session_user = meData.username;
                 closeModal();
                 showApp();
             }
         }
     };
 
+    let session_user = null;
+
     async function checkSession() {
         const res = await fetch("/me");
         const data = await res.json();
         if (data.logged) {
             userColor = data.color || "#3788d8";
+            session_user = data.username;
             showApp();
         } else {
             document.getElementById("calendar").style.display = "none";
@@ -236,19 +240,27 @@ window.onload = () => {
             editingEvent = event;
             eventTitle.value = event.title;
             fill(event);
-            deleteBtn.style.display = "inline-block";
-            document.getElementById("event_submit").innerText = "Modifier";
-        } else {
-            editingEvent = null;
-            eventTitle.value = "";
-            const now = new Date();
-            eventDate.value = now.toISOString().split("T")[0];
-            sh.value = now.getHours();
-            sm.value = 0;
-            eh.value = now.getHours() + 1;
-            em.value = 0;
-            deleteBtn.style.display = "none";
-            document.getElementById("event_submit").innerText = "Créer";
+
+            const isOwner = event.extendedProps.owner === undefined ||
+                event.extendedProps.owner === "" ||
+                event.extendedProps.owner === session_user;
+
+            if (isOwner) {
+                deleteBtn.style.display = "inline-block";
+                document.getElementById("event_submit").style.display = "inline-block";
+                document.getElementById("event_submit").innerText = "Modifier";
+                eventTitle.disabled = false;
+                eventDate.disabled = false;
+                sh.disabled = false; sm.disabled = false;
+                eh.disabled = false; em.disabled = false;
+            } else {
+                deleteBtn.style.display = "none";
+                document.getElementById("event_submit").style.display = "none";
+                eventTitle.disabled = true;
+                eventDate.disabled = true;
+                sh.disabled = true; sm.disabled = true;
+                eh.disabled = true; em.disabled = true;
+            }
         }
     }
 

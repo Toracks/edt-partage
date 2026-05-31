@@ -69,7 +69,7 @@ def me():
     c.execute("SELECT color FROM users WHERE username=%s", (session["user"],))
     row = c.fetchone()
     conn.close()
-    return jsonify({"logged": True, "color": row[0] if row and row[0] else "#3788d8"})
+    return jsonify({"logged": True, "color": row[0] if row and row[0] else "#3788d8", "username": session["user"]})
 
 @app.route("/me/color", methods=["POST"])
 def update_color():
