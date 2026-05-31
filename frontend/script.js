@@ -9,7 +9,7 @@ window.onload = () => {
     const eventModal = document.getElementById("event_modal");
     const eventTitle = document.getElementById("event_title");
 
-    let calendar;
+    let calendar = null;
     let selectedRange = null;
     let editingEvent = null;
 
@@ -66,60 +66,36 @@ window.onload = () => {
 
     const calendarEl = document.getElementById("calendar");
 
+    window.openEventModal = openEventModal;
+
     calendar = new FullCalendar.Calendar(calendarEl, {
 
         initialView: "dayGridMonth",
         events: "/events",
 
         headerToolbar: {
-            left: "prev,next today",
+            left: "prev,next today addEventButton",
             center: "title",
             right: "timeGridDay,timeGridWeek,dayGridMonth"
         },
 
         locale: "fr",
 
-        selectable: true,
-        selectMirror: true,
+        selectable: false,
         navLinks: true,
-
         editable: true,
-
         dayMaxEvents: true,
-        selectOverlap: true,
-        eventOverlap: true,
 
-        // -------- CREATION VIA SELECTION (SEMAINE / JOUR) --------
-        select: function (info) {
-
-            selectedRange = {
-                start: info.start,
-                end: info.end,
-                allDay: false
-            };
-
-            editingEvent = null;
-
-            eventTitle.value = "";
-            eventModal.classList.remove("hidden");
+        customButtons: {
+            addEventButton: {
+                text: "+ Event",
+                click: function () {
+                    openEventModal();
+                }
+            }
         },
 
-        // -------- CREATION VIA MOIS --------
-        dateClick: function (info) {
-
-            selectedRange = {
-                start: info.date,
-                end: info.date,
-                allDay: true
-            };
-
-            editingEvent = null;
-
-            eventTitle.value = "";
-            eventModal.classList.remove("hidden");
-        },
-
-        // -------- MODIFIER EVENT --------
+        // ---------------- EDIT EVENT ----------------
         eventClick: function (info) {
 
             editingEvent = info.event;
@@ -148,10 +124,22 @@ window.onload = () => {
     document.getElementById("event_submit").onclick = async () => {
 
         const title = eventTitle.value;
-        if (!title || !selectedRange) return;
+        if (!title) return;
 
-        // -------- EDIT MODE --------
+        // ---------------- EDIT MODE ----------------
         if (editingEvent) {
+
+            await fetch("/events/update", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: editingEvent.id,
+                    title,
+                    start: selectedRange.start,
+                    end: selectedRange.end,
+                    allDay: selectedRange.allDay
+                })
+            });
 
             editingEvent.setProp("title", title);
             editingEvent.setStart(selectedRange.start);
@@ -161,22 +149,39 @@ window.onload = () => {
             return;
         }
 
-        // -------- CREATE MODE --------
+        // ---------------- CREATE MODE ----------------
         await fetch("/events", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 title,
                 description: "",
-                start: selectedRange.start,
-                end: selectedRange.end,
-                allDay: selectedRange.allDay
+                start: selectedRange?.start || new Date(),
+                end: selectedRange?.end || new Date(),
+                allDay: selectedRange?.allDay ?? true
             })
         });
 
-        closeEventModal();
         calendar.refetchEvents();
+        closeEventModal();
     };
+
+    // ---------------- OPEN MODAL (CREATE) ----------------
+
+    function openEventModal() {
+
+        selectedRange = {
+            start: new Date(),
+            end: new Date(),
+            allDay: true
+        };
+
+        editingEvent = null;
+
+        eventTitle.value = "";
+
+        eventModal.classList.remove("hidden");
+    }
 
     // ---------------- APP ----------------
 
@@ -184,9 +189,7 @@ window.onload = () => {
 
         document.getElementById("login_btn").style.display = "none";
         document.getElementById("signin_btn").style.display = "none";
-
         document.querySelector(".page").style.display = "none";
-
         document.getElementById("calendar").style.display = "block";
 
         calendar.render();

@@ -45,12 +45,28 @@
     <!-- POPUP EVENT -->
     <div id="event_modal" class="modal hidden">
         <div class="modal_content">
-            <h2>Nouvel événement</h2>
 
-            <input id="event_title" placeholder="Titre">
+            <h2>Créer / Modifier un événement</h2>
+
+            <input id="event_title" placeholder="Nom de l'événement">
+
+            <input id="event_date" type="date">
+
+            <div>
+                <h4>Début</h4>
+                <input id="start_hour" type="number" min="0" max="23">
+                <input id="start_minute" type="number" min="0" max="59">
+            </div>
+
+            <div>
+                <h4>Fin</h4>
+                <input id="end_hour" type="number" min="0" max="23">
+                <input id="end_minute" type="number" min="0" max="59">
+            </div>
 
             <button id="event_submit">Créer</button>
             <button onclick="closeEventModal()">Annuler</button>
+
         </div>
     </div>
 
