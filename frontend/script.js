@@ -34,13 +34,11 @@ window.onload = () => {
         alert(data.message || data.error);
         if (res.ok && mode === "login") {
             const meRes = await fetch("/me");
-            if (meRes.ok) {
-                const meData = await meRes.json();
-                if (meData.logged) {
-                    userColor = meData.color || "#3788d8";
-                    closeModal();
-                    showApp();
-                }
+            const meData = await meRes.json();
+            if (meData.logged) {
+                userColor = meData.color || "#3788d8";
+                closeModal();
+                showApp();
             }
         }
     };
