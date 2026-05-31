@@ -161,7 +161,9 @@ window.onload = () => {
             eventTitle.value = event.title;
             fill(event);
             deleteBtn.style.display = "inline-block";
+            document.getElementById("event_submit").innerText = "Modifier";
         } else {
+            document.getElementById("event_submit").innerText = "Créer";
             editingEvent = null;
             eventTitle.value = "";
 

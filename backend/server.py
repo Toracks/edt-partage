@@ -354,37 +354,6 @@ def add_event():
     return jsonify({"message": "created"})
 
 
-@app.route("/events/update", methods=["POST"])
-def update_event():
-    data = request.json
-
-    conn = get_db()
-    c = conn.cursor()
-
-    c.execute(
-        """
-        UPDATE events
-        SET title=%s,
-            start_time=%s,
-            end_time=%s,
-            all_day=%s
-        WHERE id=%s
-    """,
-        (
-            data["title"],
-            data["start"],
-            data["end"],
-            int(data.get("allDay", 0)),
-            data["id"],
-        ),
-    )
-
-    conn.commit()
-    conn.close()
-
-    return jsonify({"message": "updated"})
-
-
 @app.route("/events/delete", methods=["POST"])
 def delete_event():
     data = request.json
