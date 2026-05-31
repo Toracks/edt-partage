@@ -426,12 +426,19 @@ def fix_db():
     conn = get_db()
     c = conn.cursor()
 
-    # SUPPRIME TABLE CASSEE
-    c.execute("DROP TABLE IF EXISTS events")
-
-    # RECREATION PROPRE
+    # USERS TABLE (OBLIGATOIRE)
     c.execute("""
-        CREATE TABLE events (
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE,
+            password TEXT,
+            status TEXT DEFAULT 'pending'
+        )
+    """)
+
+    # EVENTS TABLE (CORRECTE)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS events (
             id SERIAL PRIMARY KEY,
             title TEXT,
             description TEXT,
