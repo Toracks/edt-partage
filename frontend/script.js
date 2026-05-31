@@ -10,7 +10,7 @@ window.onload = () => {
     const eventTitle = document.getElementById("event_title");
     const deleteBtn = document.getElementById("event_delete");
 
-    let calendar = null;
+    let calendar;
     let selectedRange = null;
     let editingEvent = null;
 
@@ -27,9 +27,7 @@ window.onload = () => {
         submitBtn.innerText = type === "login" ? "Login" : "Register";
     }
 
-    window.closeModal = () => {
-        modal.classList.add("hidden");
-    };
+    window.closeModal = () => modal.classList.add("hidden");
 
     submitBtn.addEventListener("click", async () => {
 
@@ -55,12 +53,8 @@ window.onload = () => {
 
     async function checkSession() {
         const res = await fetch("/me");
-
-        if (res.ok) {
-            showApp();
-        } else {
-            document.getElementById("calendar").style.display = "none";
-        }
+        if (res.ok) showApp();
+        else document.getElementById("calendar").style.display = "none";
     }
 
     // ---------------- CALENDAR ----------------
@@ -82,12 +76,14 @@ window.onload = () => {
 
         locale: "fr",
 
-        selectable: false,
-        navLinks: true,
         editable: true,
+        navLinks: true,
         dayMaxEvents: true,
-
         eventDisplay: "block",
+
+        // 🔥 IMPORTANT POUR WEEK / DAY PROPRE
+        slotMinTime: "06:00:00",
+        slotMaxTime: "23:00:00",
 
         customButtons: {
             addEventButton: {
@@ -96,26 +92,52 @@ window.onload = () => {
             }
         },
 
-        // ---------------- EDIT EVENT ----------------
+        // ---------------- AFFICHAGE HEURE ----------------
+        eventContent: function(arg) {
+
+            const start = arg.event.start;
+            const end = arg.event.end;
+
+            const format = (d) => d ? new Date(d).toLocaleTimeString("fr-FR", {
+                hour: "2-digit",
+                minute: "2-digit"
+            }) : "";
+
+            const time = arg.event.allDay
+                ? ""
+                : `${format(start)} - ${format(end)}`;
+
+            return {
+                html: `
+                    <div class="fc-custom">
+                        <div>${arg.event.title}</div>
+                        ${time ? `<div style="font-size:11px;opacity:0.8">${time}</div>` : ""}
+                    </div>
+                `
+            };
+        },
+
+        // ---------------- EDIT ----------------
         eventClick: function (info) {
 
             editingEvent = info.event;
 
             selectedRange = {
                 start: new Date(info.event.start),
-                end: info.event.end ? new Date(info.event.end) : new Date(info.event.start.getTime() + 3600000),
+                end: info.event.end
+                    ? new Date(info.event.end)
+                    : new Date(info.event.start.getTime() + 3600000),
                 allDay: info.event.allDay
             };
 
             eventTitle.value = info.event.title;
 
             deleteBtn.style.display = "inline-block";
-
             eventModal.classList.remove("hidden");
         }
     });
 
-    // ---------------- EVENT MODAL ----------------
+    // ---------------- CLOSE MODAL ----------------
 
     window.closeEventModal = () => {
         eventModal.classList.add("hidden");
@@ -125,18 +147,18 @@ window.onload = () => {
         deleteBtn.style.display = "none";
     };
 
-    // ---------------- CREATE / UPDATE ----------------
+    // ---------------- SAVE ----------------
 
     document.getElementById("event_submit").onclick = async () => {
 
         const title = eventTitle.value;
         if (!title) return;
 
+        const start = selectedRange?.start || new Date();
+        const end = selectedRange?.end || new Date(start.getTime() + 3600000);
+
         // ---------------- EDIT ----------------
         if (editingEvent) {
-
-            const start = selectedRange.start;
-            const end = selectedRange.end || new Date(start.getTime() + 3600000);
 
             await fetch("/events/update", {
                 method: "POST",
@@ -150,18 +172,21 @@ window.onload = () => {
                 })
             });
 
-            editingEvent.setProp("title", title);
-            editingEvent.setStart(start);
-            editingEvent.setEnd(end);
+            editingEvent.remove(); // 🔥 évite doublon UI
+
+            calendar.addEvent({
+                id: editingEvent.id,
+                title,
+                start,
+                end,
+                allDay: selectedRange.allDay
+            });
 
             closeEventModal();
             return;
         }
 
         // ---------------- CREATE ----------------
-        const start = selectedRange?.start || new Date();
-        const end = selectedRange?.end || new Date(start.getTime() + 3600000);
-
         await fetch("/events", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -190,11 +215,13 @@ window.onload = () => {
             body: JSON.stringify({ id: editingEvent.id })
         });
 
-        editingEvent.remove();
+        editingEvent.remove(); // UI
+        calendar.refetchEvents(); // backend sync 🔥
+
         closeEventModal();
     };
 
-    // ---------------- OPEN CREATE ----------------
+    // ---------------- OPEN ----------------
 
     function openEventModal() {
 
@@ -207,11 +234,9 @@ window.onload = () => {
         };
 
         editingEvent = null;
-
         eventTitle.value = "";
 
         deleteBtn.style.display = "none";
-
         eventModal.classList.remove("hidden");
     }
 
@@ -226,22 +251,6 @@ window.onload = () => {
 
         calendar.render();
     }
-
-    // ---------------- ADMIN ----------------
-
-    window.loginAdmin = async () => {
-
-        const password = document.getElementById("admin_pass").value;
-
-        const res = await fetch("/admin/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ password })
-        });
-
-        const data = await res.json();
-        alert(data.message || data.error);
-    };
 
     // ---------------- START ----------------
 
