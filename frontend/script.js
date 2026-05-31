@@ -39,9 +39,11 @@ window.onload = () => {
         if (res.ok && mode === "login") {
             const meRes = await fetch("/me", { credentials: "same-origin" });
             const meData = await meRes.json();
-            userColor = meData.color || "#3788d8";
-            closeModal();
-            showApp();
+            if (meData.logged) {
+                userColor = meData.color || "#3788d8";
+                closeModal();
+                showApp();
+            }
         }
     };
 
@@ -49,8 +51,12 @@ window.onload = () => {
         const res = await fetch("/me", { credentials: "same-origin" });
         if (res.ok) {
             const data = await res.json();
-            userColor = data.color || "#3788d8";
-            showApp();
+            if (data.logged) {
+                userColor = data.color || "#3788d8";
+                showApp();
+            } else {
+                document.getElementById("calendar").style.display = "none";
+            }
         } else {
             document.getElementById("calendar").style.display = "none";
         }

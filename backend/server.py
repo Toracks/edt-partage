@@ -22,6 +22,7 @@ FRONTEND = os.path.join(BASE_DIR, "..", "frontend")
 # DB CONNECTION
 # =====================================================
 
+
 def get_db():
     if not DATABASE_URL:
         raise Exception("DATABASE_URL missing")
@@ -31,6 +32,7 @@ def get_db():
 # =====================================================
 # FRONTEND
 # =====================================================
+
 
 @app.route("/")
 def home():
@@ -46,6 +48,7 @@ def static_files(path):
 # AUTH SYSTEM
 # =====================================================
 
+
 @app.route("/register", methods=["POST"])
 def register():
     data = request.json
@@ -58,10 +61,13 @@ def register():
         conn = get_db()
         c = conn.cursor()
 
-        c.execute("""
+        c.execute(
+            """
             INSERT INTO users (username, password, status)
             VALUES (%s, %s, 'pending')
-        """, (username, hashed))
+        """,
+            (username, hashed),
+        )
 
         conn.commit()
         conn.close()
@@ -79,9 +85,12 @@ def login():
     conn = get_db()
     c = conn.cursor()
 
-    c.execute("""
+    c.execute(
+        """
         SELECT password, status FROM users WHERE username=%s
-    """, (data["username"],))
+    """,
+        (data["username"],),
+    )
 
     user = c.fetchone()
     conn.close()
@@ -145,6 +154,7 @@ def logout():
 
 ADMIN_PASSWORD = "Greninj@272010admin"
 
+
 def is_admin():
     return session.get("admin") is True
 
@@ -206,10 +216,13 @@ def admin_approve():
     conn = get_db()
     c = conn.cursor()
 
-    c.execute("""
+    c.execute(
+        """
         UPDATE users SET status='approved'
         WHERE username=%s
-    """, (username,))
+    """,
+        (username,),
+    )
 
     conn.commit()
     conn.close()
@@ -247,9 +260,12 @@ def admin_rename():
     c = conn.cursor()
 
     try:
-        c.execute("""
+        c.execute(
+            """
             UPDATE users SET username=%s WHERE id=%s
-        """, (new, user_id))
+        """,
+            (new, user_id),
+        )
 
         conn.commit()
 
@@ -265,6 +281,7 @@ def admin_rename():
 # =====================================================
 # EVENTS SYSTEM
 # =====================================================
+
 
 def to_iso(v):
     if not v:
@@ -286,18 +303,20 @@ def get_events():
     rows = c.fetchall()
     conn.close()
 
-    return jsonify([
-        {
-            "id": r[0],
-            "title": r[1],
-            "description": r[2],
-            "start": to_iso(r[3]),
-            "end": to_iso(r[4]),
-            "allDay": bool(r[5]),
-            "color": r[6] or "#3788d8"
-        }
-        for r in rows
-    ])
+    return jsonify(
+        [
+            {
+                "id": r[0],
+                "title": r[1],
+                "description": r[2],
+                "start": to_iso(r[3]),
+                "end": to_iso(r[4]),
+                "allDay": bool(r[5]),
+                "color": r[6] or "#3788d8",
+            }
+            for r in rows
+        ]
+    )
 
 
 @app.route("/events", methods=["POST"])
@@ -314,17 +333,20 @@ def add_event():
     row = c.fetchone()
     color = row[0] if row else "#3788d8"
 
-    c.execute("""
+    c.execute(
+        """
         INSERT INTO events (title, description, start_time, end_time, all_day, color)
         VALUES (%s, %s, %s, %s, %s, %s)
-    """, (
-        data["title"],
-        data.get("description", ""),
-        data["start"],
-        data["end"],
-        int(data.get("allDay", 0)),
-        color
-    ))
+    """,
+        (
+            data["title"],
+            data.get("description", ""),
+            data["start"],
+            data["end"],
+            int(data.get("allDay", 0)),
+            color,
+        ),
+    )
 
     conn.commit()
     conn.close()
@@ -339,20 +361,23 @@ def update_event():
     conn = get_db()
     c = conn.cursor()
 
-    c.execute("""
+    c.execute(
+        """
         UPDATE events
         SET title=%s,
             start_time=%s,
             end_time=%s,
             all_day=%s
         WHERE id=%s
-    """, (
-        data["title"],
-        data["start"],
-        data["end"],
-        int(data.get("allDay", 0)),
-        data["id"]
-    ))
+    """,
+        (
+            data["title"],
+            data["start"],
+            data["end"],
+            int(data.get("allDay", 0)),
+            data["id"],
+        ),
+    )
 
     conn.commit()
     conn.close()
@@ -378,6 +403,7 @@ def delete_event():
 # =====================================================
 # DEBUG
 # =====================================================
+
 
 @app.route("/debug/users")
 def debug_users():
@@ -425,6 +451,7 @@ def debug_approved():
 # INIT DB
 # =====================================================
 
+
 @app.route("/init-db")
 def init_db():
     conn = get_db()
@@ -456,6 +483,48 @@ def init_db():
     conn.close()
 
     return "OK"
+
+
+@app.route("/events/update", methods=["POST"])
+def update_event():
+    if not session.get("user"):
+        return jsonify({"error": "not logged"}), 401
+
+    data = request.json
+
+    conn = get_db()
+    c = conn.cursor()
+
+    # Vérifie que l'event appartient bien à ce user
+    c.execute("SELECT color FROM events WHERE id=%s", (data["id"],))
+    row = c.fetchone()
+
+    # Récupère la couleur du user connecté
+    c.execute("SELECT color FROM users WHERE username=%s", (session["user"],))
+    user_color = c.fetchone()[0]
+
+    # Autorise seulement si c'est sa couleur (= son event)
+    if not row or row[0] != user_color:
+        conn.close()
+        return jsonify({"error": "forbidden"}), 403
+
+    c.execute(
+        """
+        UPDATE events SET title=%s, start_time=%s, end_time=%s, all_day=%s
+        WHERE id=%s
+    """,
+        (
+            data["title"],
+            data["start"],
+            data["end"],
+            int(data.get("allDay", 0)),
+            data["id"],
+        ),
+    )
+
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "updated"})
 
 
 # =====================================================
