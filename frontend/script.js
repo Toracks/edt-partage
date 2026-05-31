@@ -3,6 +3,8 @@ window.onload = () => {
     console.log("✔ SYSTEM READY");
 
     let mode = "login";
+    let userColor = "#3788d8";
+    let settingsOpen = false;
 
     const modal = document.getElementById("auth_modal");
     const title = document.getElementById("modal_title");
@@ -31,16 +33,123 @@ window.onload = () => {
         const data = await res.json();
         alert(data.message || data.error);
         if (res.ok && mode === "login") {
-            closeModal();
-            showApp();
+            const meRes = await fetch("/me");
+            if (meRes.ok) {
+                const meData = await meRes.json();
+                if (meData.logged) {
+                    userColor = meData.color || "#3788d8";
+                    closeModal();
+                    showApp();
+                }
+            }
         }
     };
 
     async function checkSession() {
         const res = await fetch("/me");
-        if (res.ok) showApp();
-        else document.getElementById("calendar").style.display = "none";
+        if (res.ok) {
+            const data = await res.json();
+            if (data.logged) {
+                userColor = data.color || "#3788d8";
+                showApp();
+                return;
+            }
+        }
+        document.getElementById("calendar").style.display = "none";
     }
+
+    // ---------------- SETTINGS PANEL ----------------
+
+    const settingsPanel = document.createElement("div");
+    settingsPanel.id = "settings_panel";
+    settingsPanel.style.cssText = `
+        display: none;
+        position: fixed;
+        top: 65px;
+        left: 12px;
+        background: rgba(40, 40, 40, 0.97);
+        border: 1px solid rgba(0, 153, 255, 0.5);
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0, 153, 255, 0.3);
+        padding: 10px;
+        z-index: 9999;
+        display: none;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 180px;
+    `;
+
+    const colorBtn = document.createElement("button");
+    colorBtn.innerText = "🎨 Account color";
+    colorBtn.style.cssText = `
+        background: rgba(0, 153, 255, 0.2);
+        border: 1px solid rgba(0, 153, 255, 0.5);
+        color: white;
+        padding: 10px 14px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        text-align: left;
+        transition: 0.2s;
+    `;
+    colorBtn.onmouseover = () => colorBtn.style.background = "rgba(0, 153, 255, 0.5)";
+    colorBtn.onmouseout = () => colorBtn.style.background = "rgba(0, 153, 255, 0.2)";
+
+    colorBtn.onclick = () => {
+        const input = document.createElement("input");
+        input.type = "color";
+        input.value = userColor;
+        input.oninput = async (e) => {
+            userColor = e.target.value;
+            await fetch("/me/color", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ color: userColor })
+            });
+            await calendar.refetchEvents();
+        };
+        input.click();
+    };
+
+    const logoutBtn = document.createElement("button");
+    logoutBtn.innerText = "🚪 Disconnect";
+    logoutBtn.style.cssText = `
+        background: rgba(255, 60, 60, 0.2);
+        border: 1px solid rgba(255, 60, 60, 0.5);
+        color: white;
+        padding: 10px 14px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        text-align: left;
+        transition: 0.2s;
+    `;
+    logoutBtn.onmouseover = () => logoutBtn.style.background = "rgba(255, 60, 60, 0.5)";
+    logoutBtn.onmouseout = () => logoutBtn.style.background = "rgba(255, 60, 60, 0.2)";
+
+    logoutBtn.onclick = async () => {
+        await fetch("/logout", { method: "POST" });
+        location.reload();
+    };
+
+    settingsPanel.appendChild(colorBtn);
+    settingsPanel.appendChild(logoutBtn);
+    document.body.appendChild(settingsPanel);
+
+    document.getElementById("setting_btn").onclick = (e) => {
+        e.stopPropagation();
+        settingsOpen = !settingsOpen;
+        settingsPanel.style.display = settingsOpen ? "flex" : "none";
+    };
+
+    document.addEventListener("click", (e) => {
+        if (settingsOpen && !settingsPanel.contains(e.target) && e.target.id !== "setting_btn") {
+            settingsOpen = false;
+            settingsPanel.style.display = "none";
+        }
+    });
+
+    // ---------------- CALENDAR ----------------
 
     const calendarEl = document.getElementById("calendar");
     let editingEvent = null;
@@ -72,6 +181,8 @@ window.onload = () => {
         eventOrder: "start,-duration,title",
         eventClick: (info) => openModalEvent(info.event)
     });
+
+    // ---------------- EVENT MODAL ----------------
 
     const eventModal = document.getElementById("event_modal");
     const eventTitle = document.getElementById("event_title");
@@ -133,11 +244,16 @@ window.onload = () => {
         if (!title) return;
         const { start, end } = buildDate();
         if (editingEvent) {
-            await fetch("/events/update", {
+            const res = await fetch("/events/update", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id: editingEvent.id, title, start, end })
             });
+            if (res.status === 403) {
+                alert("Vous ne pouvez pas modifier un événement d'un autre compte.");
+                closeEventModal();
+                return;
+            }
         } else {
             await fetch("/events", {
                 method: "POST",
@@ -151,25 +267,29 @@ window.onload = () => {
 
     deleteBtn.onclick = async () => {
         if (!editingEvent) return;
-        await fetch("/events/delete", {
+        const res = await fetch("/events/delete", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id: editingEvent.id })
         });
+        if (res.status === 403) {
+            alert("Vous ne pouvez pas supprimer un événement d'un autre compte.");
+            closeEventModal();
+            return;
+        }
         editingEvent.remove();
         await calendar.refetchEvents();
         closeEventModal();
     };
 
-    document.getElementById("setting_btn").onclick = () => {
-        alert("Paramètres - à venir");
-    };
+    // ---------------- APP ----------------
 
     function showApp() {
         document.getElementById("login_btn").style.display = "none";
         document.getElementById("signin_btn").style.display = "none";
         document.querySelector(".page").style.display = "none";
         document.getElementById("calendar").style.display = "block";
+        document.getElementById("setting_btn").style.display = "block";
         calendar.render();
     }
 

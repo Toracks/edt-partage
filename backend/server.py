@@ -64,9 +64,26 @@ def login():
 def me():
     if not session.get("user"):
         return jsonify({"logged": False}), 401
-    return jsonify({"logged": True})
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT color FROM users WHERE username=%s", (session["user"],))
+    row = c.fetchone()
+    conn.close()
+    return jsonify({"logged": True, "color": row[0] if row and row[0] else "#3788d8"})
 
-@app.route("/logout")
+@app.route("/me/color", methods=["POST"])
+def update_color():
+    if not session.get("user"):
+        return jsonify({"error": "not logged"}), 401
+    color = request.json.get("color", "#3788d8")
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE users SET color=%s WHERE username=%s", (color, session["user"]))
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "ok"})
+
+@app.route("/logout", methods=["POST", "GET"])
 def logout():
     session.clear()
     return jsonify({"message": "Logged out"})
@@ -161,22 +178,36 @@ def to_iso(v):
 def get_events():
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT id, title, description, start_time, end_time, all_day FROM events ORDER BY start_time")
+    c.execute("SELECT id, title, description, start_time, end_time, all_day, color, owner FROM events ORDER BY start_time")
     rows = c.fetchall()
     conn.close()
     return jsonify([
-        {"id": r[0], "title": r[1], "description": r[2], "start": to_iso(r[3]), "end": to_iso(r[4]), "allDay": bool(r[5])}
+        {
+            "id": r[0],
+            "title": r[1],
+            "description": r[2],
+            "start": to_iso(r[3]),
+            "end": to_iso(r[4]),
+            "allDay": bool(r[5]),
+            "color": r[6] or "#3788d8",
+            "owner": r[7] or ""
+        }
         for r in rows
     ])
 
 @app.route("/events", methods=["POST"])
 def add_event():
+    if not session.get("user"):
+        return jsonify({"error": "not logged"}), 401
     data = request.json
     conn = get_db()
     c = conn.cursor()
+    c.execute("SELECT color FROM users WHERE username=%s", (session["user"],))
+    row = c.fetchone()
+    color = row[0] if row and row[0] else "#3788d8"
     c.execute(
-        "INSERT INTO events (title, description, start_time, end_time, all_day) VALUES (%s, %s, %s, %s, %s)",
-        (data["title"], data.get("description", ""), data["start"], data["end"], int(data.get("allDay", 0)))
+        "INSERT INTO events (title, description, start_time, end_time, all_day, color, owner) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+        (data["title"], data.get("description", ""), data["start"], data["end"], int(data.get("allDay", 0)), color, session["user"])
     )
     conn.commit()
     conn.close()
@@ -184,9 +215,16 @@ def add_event():
 
 @app.route("/events/update", methods=["POST"])
 def update_event():
+    if not session.get("user"):
+        return jsonify({"error": "not logged"}), 401
     data = request.json
     conn = get_db()
     c = conn.cursor()
+    c.execute("SELECT owner FROM events WHERE id=%s", (data["id"],))
+    row = c.fetchone()
+    if not row or row[0] != session["user"]:
+        conn.close()
+        return jsonify({"error": "forbidden"}), 403
     c.execute(
         "UPDATE events SET title=%s, start_time=%s, end_time=%s, all_day=%s WHERE id=%s",
         (data["title"], data["start"], data["end"], int(data.get("allDay", 0)), data["id"])
@@ -197,9 +235,16 @@ def update_event():
 
 @app.route("/events/delete", methods=["POST"])
 def delete_event():
+    if not session.get("user"):
+        return jsonify({"error": "not logged"}), 401
     data = request.json
     conn = get_db()
     c = conn.cursor()
+    c.execute("SELECT owner FROM events WHERE id=%s", (data["id"],))
+    row = c.fetchone()
+    if not row or row[0] != session["user"]:
+        conn.close()
+        return jsonify({"error": "forbidden"}), 403
     c.execute("DELETE FROM events WHERE id=%s", (data["id"],))
     conn.commit()
     conn.close()
@@ -246,7 +291,8 @@ def init_db():
             id SERIAL PRIMARY KEY,
             username TEXT UNIQUE,
             password TEXT,
-            status TEXT DEFAULT 'pending'
+            status TEXT DEFAULT 'pending',
+            color TEXT DEFAULT '#3788d8'
         )
     """)
     c.execute("""
@@ -256,7 +302,9 @@ def init_db():
             description TEXT,
             start_time TEXT,
             end_time TEXT,
-            all_day INTEGER DEFAULT 0
+            all_day INTEGER DEFAULT 0,
+            color TEXT DEFAULT '#3788d8',
+            owner TEXT DEFAULT ''
         )
     """)
     conn.commit()
