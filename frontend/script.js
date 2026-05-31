@@ -6,6 +6,16 @@ window.onload = () => {
     const title = document.getElementById("modal_title");
     const submitBtn = document.getElementById("auth_submit");
 
+    // EVENT MODAL (une seule fois)
+    const eventModal = document.getElementById("event_modal");
+    const eventTitle = document.getElementById("event_title");
+    const eventSubmit = document.getElementById("event_submit");
+
+    let calendar;
+    let selectedRange = null;
+
+    // ---------------- AUTH ----------------
+
     document.getElementById("login_btn").onclick = () => openModal("login");
     document.getElementById("signin_btn").onclick = () => openModal("register");
 
@@ -16,24 +26,6 @@ window.onload = () => {
         title.innerText = type === "login" ? "Login" : "Sign in";
         submitBtn.innerText = type === "login" ? "Login" : "Register";
     }
-
-    const loginAdmin = async () => {
-        const password = document.getElementById("admin_pass").value;
-
-        const res = await fetch("/admin/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ password })
-        });
-
-        const data = await res.json();
-        alert(data.message || data.error);
-
-        if (res.ok) {
-            loadPending();
-            loadApproved();
-        }
-    };
 
     window.closeModal = () => {
         modal.classList.add("hidden");
@@ -53,7 +45,6 @@ window.onload = () => {
         });
 
         const data = await res.json();
-
         alert(data.message || data.error);
 
         if (res.ok && mode === "login") {
@@ -72,80 +63,101 @@ window.onload = () => {
         }
     }
 
-    const calendarEl = document.getElementById('calendar');
+    // ---------------- CALENDAR ----------------
 
-    const calendar = new FullCalendar.Calendar(calendarEl, {
+    const calendarEl = document.getElementById("calendar");
 
-    initialView: 'dayGridMonth',
+    calendar = new FullCalendar.Calendar(calendarEl, {
 
-    events: "/events",
+        initialView: "dayGridMonth",
 
-    headerToolbar: {
-        left: 'prev,next today',
-        center: 'title',
-        right: 'timeGridDay,timeGridWeek,dayGridMonth'
-    },
+        events: "/events",
 
-    locale: 'fr',
+        headerToolbar: {
+            left: "prev,next today",
+            center: "title",
+            right: "timeGridDay,timeGridWeek,dayGridMonth"
+        },
 
-    selectable: true,
-    selectMirror: true,
+        locale: "fr",
 
-    navLinks: true,
-    editable: false,
-    dayMaxEvents: true,
+        selectable: true,
+        selectMirror: true,
+        navLinks: true,
+        editable: false,
+        dayMaxEvents: true,
 
-    dateClick: function (info) {
-        const title = prompt("Nom de l'événement :");
-        if (!title) return;
+        dateClick: function (info) {
 
-        fetch("/events", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                title: title,
-                description: "",
+            selectedRange = {
                 start: info.date,
                 end: info.date,
                 allDay: true
-            })
-        }).then(() => calendar.refetchEvents());
-    },
+            };
 
-    select: function (info) {
-        const title = prompt("Nom de l'événement :");
-        if (!title) return;
+            eventTitle.value = "";
+            eventModal.classList.remove("hidden");
+        }
 
-        fetch("/events", {
+    });
+
+    // ---------------- EVENT MODAL ----------------
+
+    eventSubmit.onclick = async () => {
+
+        const title = eventTitle.value;
+        if (!title || !selectedRange) return;
+
+        await fetch("/events", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 title: title,
                 description: "",
-                start: info.start,
-                end: info.end,
-                allDay: false
+                start: selectedRange.start,
+                end: selectedRange.end,
+                allDay: selectedRange.allDay
             })
-        }).then(() => calendar.refetchEvents());
+        });
 
-        calendar.unselect();
-    }
+        eventModal.classList.add("hidden");
+        eventTitle.value = "";
 
-});
+        calendar.refetchEvents();
+    };
+
+    window.closeEventModal = () => {
+        eventModal.classList.add("hidden");
+        eventTitle.value = "";
+        selectedRange = null;
+    };
+
+    // ---------------- APP ----------------
 
     function showApp() {
+
         document.getElementById("login_btn").style.display = "none";
         document.getElementById("signin_btn").style.display = "none";
 
-        document.querySelector(".page").style.display = "none"; // <-- cache le H1
+        document.querySelector(".page").style.display = "none";
 
         document.getElementById("calendar").style.display = "block";
 
-        calendar.render(); // <-- IMPORTANT
+        calendar.render();
     }
 
+    window.loginAdmin = async () => {
+        const password = document.getElementById("admin_pass").value;
 
-    window.loginAdmin = loginAdmin;
+        const res = await fetch("/admin/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password })
+        });
+
+        const data = await res.json();
+        alert(data.message || data.error);
+    };
 
     checkSession();
 };
