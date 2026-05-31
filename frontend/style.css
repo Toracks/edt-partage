@@ -289,3 +289,129 @@ body {
 .fc-daygrid-body tr {
     height: auto !important;
 }
+
+.auth_user {
+    width: 295px;
+    height: 25px;
+    border-radius: 5px;
+    text-align: center;
+
+    background: rgba(56, 56, 56, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 5px 15px rgba(22, 22, 22, 0.1);
+    color: white;
+
+    cursor: text;
+    font-size: 15px;
+    transition: 0.25s;
+    text-transform: capitalize;
+}
+
+.auth_user:hover{
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8)
+}
+
+.auth_pass {
+    width: 295px;
+    height: 25px;
+    border-radius: 5px;
+    text-align: center;
+
+    background: rgba(56, 56, 56, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 5px 15px rgba(22, 22, 22, 0.1);
+    color: white;
+
+    cursor: text;
+    font-size: 15px;
+    transition: 0.25s;
+    text-transform: capitalize;
+}
+
+.auth_pass:hover{
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8)
+}
+
+.auth_submit {
+    width: 295px;
+    height: 25px;
+    border-radius: 5px;
+    text-align: center;
+
+    background: rgba(56, 56, 56, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 5px 15px rgba(22, 22, 22, 0.1);
+    color: white;
+
+    cursor: pointer;
+    font-size: 15px;
+    transition: 0.25s;
+    text-transform: capitalize;
+    transition: 0.3s;
+}
+
+.auth_submit:hover {
+    background: rgba(19, 223, 0, 0.8);
+    box-shadow: 0 0 10px rgba(19, 223, 0, 0.8)
+}
+
+.close_btn {
+    width: 295px;
+    height: 25px;
+    border-radius: 5px;
+    text-align: center;
+
+    background: rgba(56, 56, 56, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 5px 15px rgba(22, 22, 22, 0.1);
+    color: white;
+
+    cursor: pointer;
+    font-size: 15px;
+    transition: 0.25s;
+    text-transform: capitalize;
+    transition: 0.3s;
+}
+
+.close_btn:hover {
+    background: rgba(223, 0, 0, 0.8);
+    box-shadow: 0 0 10px rgba(223, 0, 0, 0.8);
+}
+
+.event_title {
+    width: 295px;
+    height: 25px;
+    border-radius: 5px;
+    text-align: center;
+
+    background: rgba(56, 56, 56, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 5px 15px rgba(22, 22, 22, 0.1);
+    color: white;
+
+    cursor: text;
+    font-size: 15px;
+    transition: 0.25s;
+    text-transform: capitalize;
+}
+
+.event_date {
+    width: 295px;
+    height: 25px;
+    border-radius: 5px;
+    text-align: center;
+
+    background: rgba(56, 56, 56, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 5px 15px rgba(22, 22, 22, 0.1);
+    color: white;
+
+    cursor: text;
+    font-size: 15px;
+    transition: 0.25s;
+    text-transform: capitalize;
+}
+
+#event_date::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+}

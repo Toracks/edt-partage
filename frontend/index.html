@@ -31,12 +31,12 @@
 
             <h2 id="modal_title">Login</h2>
 
-            <input id="auth_user" placeholder="username">
-            <input id="auth_pass" type="password" placeholder="password">
+            <input id="auth_user" class="auth_user" placeholder="username">
+            <input id="auth_pass" class="auth_pass" type="password" placeholder="password">
 
-            <button id="auth_submit">Submit</button>
+            <button id="auth_submit" class="auth_submit">Submit</button>
 
-            <button onclick="closeModal()">Close</button>
+            <button onclick="closeModal()" class="close_btn">Close</button>
 
         </div>
 
@@ -48,9 +48,9 @@
 
             <h2>Créer / Modifier un événement</h2>
 
-            <input id="event_title" placeholder="Nom de l'événement">
+            <input id="event_title" class="event_title" placeholder="Nom de l'événement">
 
-            <input id="event_date" type="date">
+            <input id="event_date" class="event_date" type="date">
 
             <div>
                 <h4>Début</h4>
