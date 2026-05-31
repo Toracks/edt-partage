@@ -322,6 +322,23 @@ def migrate_db():
     conn.close()
     return "Migration OK"
 
+@app.route("/fix-my-events", methods=["POST"])
+def fix_my_events():
+    if not session.get("user"):
+        return jsonify({"error": "not logged"}), 401
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT color FROM users WHERE username=%s", (session["user"],))
+    row = c.fetchone()
+    color = row[0] if row and row[0] else "#3788d8"
+    c.execute(
+        "UPDATE events SET color=%s, owner=%s WHERE owner=''",
+        (color, session["user"])
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "ok"})
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)

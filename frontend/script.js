@@ -129,6 +129,28 @@ window.onload = () => {
     };
 
     settingsPanel.appendChild(colorBtn);
+    const fixBtn = document.createElement("button");
+    fixBtn.innerText = "🔧 Claim old events";
+    fixBtn.style.cssText = `
+    background: rgba(255, 180, 0, 0.2);
+    border: 1px solid rgba(255, 180, 0, 0.5);
+    color: white;
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    text-align: left;
+    transition: 0.2s;
+`;
+    fixBtn.onmouseover = () => fixBtn.style.background = "rgba(255, 180, 0, 0.5)";
+    fixBtn.onmouseout = () => fixBtn.style.background = "rgba(255, 180, 0, 0.2)";
+    fixBtn.onclick = async () => {
+        await fetch("/fix-my-events", { method: "POST" });
+        await calendar.refetchEvents();
+        settingsPanel.style.display = "none";
+        settingsOpen = false;
+    };
+    settingsPanel.appendChild(fixBtn);
     settingsPanel.appendChild(logoutBtn);
     document.body.appendChild(settingsPanel);
 
