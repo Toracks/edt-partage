@@ -47,15 +47,13 @@ window.onload = () => {
 
     async function checkSession() {
         const res = await fetch("/me");
-        if (res.ok) {
-            const data = await res.json();
-            if (data.logged) {
-                userColor = data.color || "#3788d8";
-                showApp();
-                return;
-            }
+        const data = await res.json();
+        if (data.logged) {
+            userColor = data.color || "#3788d8";
+            showApp();
+        } else {
+            document.getElementById("calendar").style.display = "none";
         }
-        document.getElementById("calendar").style.display = "none";
     }
 
     // ---------------- SETTINGS PANEL ----------------

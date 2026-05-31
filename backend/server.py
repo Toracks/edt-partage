@@ -63,7 +63,7 @@ def login():
 @app.route("/me")
 def me():
     if not session.get("user"):
-        return jsonify({"logged": False}), 401
+        return jsonify({"logged": False}), 200
     conn = get_db()
     c = conn.cursor()
     c.execute("SELECT color FROM users WHERE username=%s", (session["user"],))
