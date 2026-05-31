@@ -1,5 +1,7 @@
 window.onload = () => {
 
+    console.log("✔ SYSTEM READY");
+
     // ---------------- AUTH ----------------
     let mode = "login";
 
@@ -20,6 +22,7 @@ window.onload = () => {
     window.closeModal = () => modal.classList.add("hidden");
 
     submitBtn.onclick = async () => {
+
         const username = document.getElementById("auth_user").value;
         const password = document.getElementById("auth_pass").value;
 
@@ -84,7 +87,6 @@ window.onload = () => {
 
         eventOrder: "start,-duration,title",
 
-        // CLICK EVENT = EDIT
         eventClick: (info) => {
             openModalEvent(info.event);
         }
@@ -95,13 +97,16 @@ window.onload = () => {
     const eventModal = document.getElementById("event_modal");
     const eventTitle = document.getElementById("event_title");
     const eventDate = document.getElementById("event_date");
+
     const sh = document.getElementById("start_hour");
     const sm = document.getElementById("start_minute");
     const eh = document.getElementById("end_hour");
     const em = document.getElementById("end_minute");
+
     const deleteBtn = document.getElementById("event_delete");
 
     function fill(e) {
+
         const s = new Date(e.start);
         const en = e.end ? new Date(e.end) : new Date(s.getTime() + 3600000);
 
@@ -109,11 +114,13 @@ window.onload = () => {
 
         sh.value = s.getHours();
         sm.value = s.getMinutes();
+
         eh.value = en.getHours();
         em.value = en.getMinutes();
     }
 
     function buildDate() {
+
         const d = eventDate.value;
 
         const start = new Date(d);
@@ -140,11 +147,15 @@ window.onload = () => {
             editingEvent = null;
 
             eventTitle.value = "";
-            eventDate.value = "";
-            sh.value = "";
-            sm.value = "";
-            eh.value = "";
-            em.value = "";
+
+            const now = new Date();
+            eventDate.value = now.toISOString().split("T")[0];
+
+            sh.value = now.getHours();
+            sm.value = 0;
+
+            eh.value = now.getHours() + 1;
+            em.value = 0;
 
             deleteBtn.style.display = "none";
         }
@@ -155,7 +166,7 @@ window.onload = () => {
         editingEvent = null;
     };
 
-    // ---------------- SAVE (ULTRA CLEAN) ----------------
+    // ---------------- SAVE ----------------
 
     document.getElementById("event_submit").onclick = async () => {
 
@@ -190,11 +201,11 @@ window.onload = () => {
             });
         }
 
-        await calendar.refetchEvents(); // CRUCIAL
+        await calendar.refetchEvents();
         closeEventModal();
     };
 
-    // ---------------- DELETE (FIX 100%) ----------------
+    // ---------------- DELETE ----------------
 
     deleteBtn.onclick = async () => {
 
@@ -206,11 +217,12 @@ window.onload = () => {
             body: JSON.stringify({ id: editingEvent.id })
         });
 
-        await calendar.refetchEvents(); // IMPORTANT
+        editingEvent.remove();
+        await calendar.refetchEvents();
         closeEventModal();
     };
 
-    // ---------------- SHOW APP ----------------
+    // ---------------- APP ----------------
 
     function showApp() {
         document.getElementById("login_btn").style.display = "none";

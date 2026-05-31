@@ -272,27 +272,31 @@ def admin_rename():
     return jsonify({"message": "renamed"})
 
 
-@app.route("/admin/delete", methods=["POST"])
-def admin_delete():
-    if not is_admin():
-        return jsonify({"error": "forbidden"}), 403
-
-    user_id = request.json["id"]
+@app.route("/events/delete", methods=["POST"])
+def delete_event():
+    data = request.json
+    event_id = data["id"]
 
     conn = get_db()
     c = conn.cursor()
 
-    c.execute("DELETE FROM users WHERE id=%s", (user_id,))
+    c.execute("DELETE FROM events WHERE id=%s", (event_id,))
 
     conn.commit()
     conn.close()
 
     return jsonify({"message": "deleted"})
 
+# =====================================================
+# ================== EVENTS SYSTEM =====================
+# =====================================================
 
-# =====================================================
-# ================== EVENTS SYSTEM ====================
-# =====================================================
+from datetime import datetime
+
+def to_iso(value):
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return value
 
 
 @app.route("/events", methods=["GET"])
@@ -303,6 +307,7 @@ def get_events():
     c.execute("""
         SELECT id, title, description, start_time, end_time, all_day
         FROM events
+        ORDER BY start_time
     """)
 
     rows = c.fetchall()
@@ -333,7 +338,7 @@ def add_event():
         VALUES (%s, %s, %s, %s, %s)
     """, (
         data["title"],
-        data["description"],
+        data.get("description", ""),
         data["start"],
         data["end"],
         int(data.get("allDay", 0))
@@ -342,7 +347,50 @@ def add_event():
     conn.commit()
     conn.close()
 
-    return jsonify({"message": "event created"})
+    return jsonify({"message": "created"})
+
+
+@app.route("/events/update", methods=["POST"])
+def update_event():
+    data = request.json
+
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute("""
+        UPDATE events
+        SET title=%s,
+            start_time=%s,
+            end_time=%s,
+            all_day=%s
+        WHERE id=%s
+    """, (
+        data["title"],
+        data["start"],
+        data["end"],
+        int(data.get("allDay", 0)),
+        data["id"]
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"message": "updated"})
+
+
+@app.route("/events/delete", methods=["POST"])
+def delete_event():
+    data = request.json
+
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute("DELETE FROM events WHERE id=%s", (data["id"],))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"message": "deleted"})
 
 # =====================================================
 # ================== DEBUG ROUTES =====================
@@ -452,6 +500,8 @@ def fix_db():
     conn.close()
 
     return "DB FIXED OK"
+
+
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
