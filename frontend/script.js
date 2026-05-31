@@ -1,5 +1,6 @@
 window.onload = () => {
 
+    console.log("SCRIPT CHARGÉ ✔️");
     // ---------------- AUTH ----------------
     let mode = "login";
 
