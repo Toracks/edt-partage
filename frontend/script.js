@@ -87,6 +87,8 @@ window.onload = () => {
         editable: true,
         dayMaxEvents: true,
 
+        eventDisplay: "block",
+
         customButtons: {
             addEventButton: {
                 text: "+ Event",
@@ -94,14 +96,14 @@ window.onload = () => {
             }
         },
 
-        // ---------------- CLICK EVENT (EDIT) ----------------
+        // ---------------- EDIT EVENT ----------------
         eventClick: function (info) {
 
             editingEvent = info.event;
 
             selectedRange = {
-                start: info.event.start,
-                end: info.event.end,
+                start: new Date(info.event.start),
+                end: info.event.end ? new Date(info.event.end) : new Date(info.event.start.getTime() + 3600000),
                 allDay: info.event.allDay
             };
 
@@ -133,35 +135,41 @@ window.onload = () => {
         // ---------------- EDIT ----------------
         if (editingEvent) {
 
+            const start = selectedRange.start;
+            const end = selectedRange.end || new Date(start.getTime() + 3600000);
+
             await fetch("/events/update", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     id: editingEvent.id,
                     title,
-                    start: selectedRange.start,
-                    end: selectedRange.end,
+                    start,
+                    end,
                     allDay: selectedRange.allDay
                 })
             });
 
             editingEvent.setProp("title", title);
-            editingEvent.setStart(selectedRange.start);
-            editingEvent.setEnd(selectedRange.end);
+            editingEvent.setStart(start);
+            editingEvent.setEnd(end);
 
             closeEventModal();
             return;
         }
 
         // ---------------- CREATE ----------------
+        const start = selectedRange?.start || new Date();
+        const end = selectedRange?.end || new Date(start.getTime() + 3600000);
+
         await fetch("/events", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 title,
                 description: "",
-                start: selectedRange?.start || new Date(),
-                end: selectedRange?.end || new Date(),
+                start,
+                end,
                 allDay: selectedRange?.allDay ?? true
             })
         });
@@ -186,13 +194,15 @@ window.onload = () => {
         closeEventModal();
     };
 
-    // ---------------- OPEN MODAL (CREATE) ----------------
+    // ---------------- OPEN CREATE ----------------
 
     function openEventModal() {
 
+        const now = new Date();
+
         selectedRange = {
-            start: new Date(),
-            end: new Date(),
+            start: now,
+            end: new Date(now.getTime() + 3600000),
             allDay: true
         };
 
