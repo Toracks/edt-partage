@@ -55,7 +55,7 @@ window.onload = () => {
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
 
-        initialView: "timeGridWeek",
+        initialView: "dayGridWeek",
         timeZone: "local",
 
         events: "/events",
@@ -63,7 +63,7 @@ window.onload = () => {
         headerToolbar: {
             left: "prev,next today addEvent",
             center: "title",
-            right: "timeGridDay,timeGridWeek,dayGridMonth,dayGridWeek" // ajoute dayGridWeek
+            right: "dayGridDay,dayGridWeek,dayGridMonth"
         },
 
         customButtons: {
@@ -73,6 +73,8 @@ window.onload = () => {
             }
         },
 
+        locale: "fr",
+        dayHeaderFormat: { weekday: "long", day: "2-digit", month: "2-digit" },
         initialView: "dayGridWeek",
         editable: false,
         navLinks: true,
