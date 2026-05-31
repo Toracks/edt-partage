@@ -253,3 +253,20 @@ body {
     font-size: 10px;
     opacity: 0.8;
 }
+
+
+.fc-daygrid-event-harness {
+    display: block !important;
+}
+
+.fc-daygrid-event {
+    display: block !important;
+    width: 100% !important;
+}
+
+
+.fc-daygrid-day-events {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}

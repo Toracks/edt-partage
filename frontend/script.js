@@ -63,7 +63,7 @@ window.onload = () => {
         headerToolbar: {
             left: "prev,next today addEvent",
             center: "title",
-            right: "dayGridMonth,timeGridWeek,timeGridDay"
+            right: "timeGridDay,timeGridWeek,dayGridMonth"
         },
 
         customButtons: {
