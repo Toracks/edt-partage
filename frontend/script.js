@@ -81,7 +81,6 @@ window.onload = () => {
         dayMaxEvents: true,
         eventDisplay: "block",
 
-        // 🔥 IMPORTANT POUR WEEK / DAY PROPRE
         slotMinTime: "06:00:00",
         slotMaxTime: "23:00:00",
 
@@ -92,24 +91,23 @@ window.onload = () => {
             }
         },
 
-        // ---------------- AFFICHAGE HEURE ----------------
-        eventContent: function(arg) {
+        // ---------------- DISPLAY CLEAN + HOURS ----------------
+        eventContent: function (arg) {
 
-            const start = arg.event.start;
-            const end = arg.event.end;
-
-            const format = (d) => d ? new Date(d).toLocaleTimeString("fr-FR", {
-                hour: "2-digit",
-                minute: "2-digit"
-            }) : "";
+            const format = (d) => d
+                ? new Date(d).toLocaleTimeString("fr-FR", {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                })
+                : "";
 
             const time = arg.event.allDay
                 ? ""
-                : `${format(start)} - ${format(end)}`;
+                : `${format(arg.event.start)} - ${format(arg.event.end)}`;
 
             return {
                 html: `
-                    <div class="fc-custom">
+                    <div class="fc-custom-event">
                         <div>${arg.event.title}</div>
                         ${time ? `<div style="font-size:11px;opacity:0.8">${time}</div>` : ""}
                     </div>
@@ -123,10 +121,8 @@ window.onload = () => {
             editingEvent = info.event;
 
             selectedRange = {
-                start: new Date(info.event.start),
-                end: info.event.end
-                    ? new Date(info.event.end)
-                    : new Date(info.event.start.getTime() + 3600000),
+                start: info.event.start,
+                end: info.event.end || new Date(info.event.start.getTime() + 3600000),
                 allDay: info.event.allDay
             };
 
@@ -137,7 +133,7 @@ window.onload = () => {
         }
     });
 
-    // ---------------- CLOSE MODAL ----------------
+    // ---------------- CLOSE ----------------
 
     window.closeEventModal = () => {
         eventModal.classList.add("hidden");
@@ -154,33 +150,29 @@ window.onload = () => {
         const title = eventTitle.value;
         if (!title) return;
 
-        const start = selectedRange?.start || new Date();
-        const end = selectedRange?.end || new Date(start.getTime() + 3600000);
+        const start = new Date(selectedRange.start);
+        const end = new Date(selectedRange.end || (start.getTime() + 3600000));
 
-        // ---------------- EDIT ----------------
+        const payload = {
+            title,
+            start: start.toISOString(),
+            end: end.toISOString(),
+            allDay: selectedRange.allDay ?? false
+        };
+
+        // ---------------- UPDATE ----------------
         if (editingEvent) {
+
+            payload.id = editingEvent.id;
 
             await fetch("/events/update", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    id: editingEvent.id,
-                    title,
-                    start,
-                    end,
-                    allDay: selectedRange.allDay
-                })
+                body: JSON.stringify(payload)
             });
 
-            editingEvent.remove(); // 🔥 évite doublon UI
-
-            calendar.addEvent({
-                id: editingEvent.id,
-                title,
-                start,
-                end,
-                allDay: selectedRange.allDay
-            });
+            editingEvent.remove();
+            calendar.addEvent(payload);
 
             closeEventModal();
             return;
@@ -190,13 +182,7 @@ window.onload = () => {
         await fetch("/events", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                title,
-                description: "",
-                start,
-                end,
-                allDay: selectedRange?.allDay ?? true
-            })
+            body: JSON.stringify(payload)
         });
 
         calendar.refetchEvents();
@@ -215,13 +201,13 @@ window.onload = () => {
             body: JSON.stringify({ id: editingEvent.id })
         });
 
-        editingEvent.remove(); // UI
-        calendar.refetchEvents(); // backend sync 🔥
+        editingEvent.remove();
+        calendar.refetchEvents();
 
         closeEventModal();
     };
 
-    // ---------------- OPEN ----------------
+    // ---------------- OPEN CREATE ----------------
 
     function openEventModal() {
 
@@ -230,7 +216,7 @@ window.onload = () => {
         selectedRange = {
             start: now,
             end: new Date(now.getTime() + 3600000),
-            allDay: true
+            allDay: false
         };
 
         editingEvent = null;
@@ -251,8 +237,6 @@ window.onload = () => {
 
         calendar.render();
     }
-
-    // ---------------- START ----------------
 
     checkSession();
 };
