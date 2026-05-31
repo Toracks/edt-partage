@@ -321,6 +321,9 @@ window.onload = () => {
         document.getElementById("calendar").style.display = "block";
         document.getElementById("setting_btn").style.display = "block";
         calendar.render();
+        setInterval(() => {
+            calendar.refetchEvents();
+        }, 30000);
     }
 
     checkSession();
