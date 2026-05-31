@@ -240,6 +240,8 @@ body {
 }
 
 .fc-timegrid-axis-frame {
+    min-height: unset !important;
+    height: auto !important;
     display: none !important;
 }
 
@@ -253,8 +255,6 @@ body {
     font-size: 10px;
     opacity: 0.8;
 }
-
-
 
 
 .fc-daygrid-day-events {
@@ -280,4 +280,12 @@ body {
 .fc-event {
     width: 100% !important;
     margin-bottom: 0 !important;
+}
+
+.fc-daygrid-body {
+    height: auto !important;
+}
+
+.fc-daygrid-body tr {
+    height: auto !important;
 }

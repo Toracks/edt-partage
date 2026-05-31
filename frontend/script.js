@@ -86,6 +86,7 @@ window.onload = () => {
         views: {
             dayGridMonth: {
                 dayMaxEvents: 3,
+                fixedWeekCount: false,
             }
         },
 
