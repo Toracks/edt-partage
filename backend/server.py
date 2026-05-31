@@ -26,42 +26,7 @@ def get_db():
 
 
 # ---------------- INIT DB ----------------
-def init_db():
-    conn = get_db()
-    c = conn.cursor()
 
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id SERIAL PRIMARY KEY,
-            username TEXT UNIQUE,
-            password TEXT,
-            status TEXT DEFAULT 'pending'
-        )
-    """)
-
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS events (
-            id SERIAL PRIMARY KEY,
-            title TEXT,
-            description TEXT,
-            start TEXT,
-            end TEXT,
-            all_day BOOLEAN DEFAULT FALSE
-        )
-    """)
-
-    conn.commit()
-    conn.close()
-
-
-def safe_init():
-    try:
-        init_db()
-    except Exception as e:
-        print("DB init skipped:", e)
-
-
-safe_init()
 
 
 # ---------------- FRONTEND ----------------
@@ -335,24 +300,25 @@ def get_events():
     conn = get_db()
     c = conn.cursor()
 
-    c.execute("SELECT id, title, description, start, end, all_day FROM events")
-    rows = c.fetchall()
+    c.execute("""
+        SELECT id, title, description, start_time, end_time, all_day
+        FROM events
+    """)
 
+    rows = c.fetchall()
     conn.close()
 
-    return jsonify(
-        [
-            {
-                "id": r[0],
-                "title": r[1],
-                "description": r[2],
-                "start": r[3],
-                "end": r[4],
-                "allDay": bool(r[5]),
-            }
-            for r in rows
-        ]
-    )
+    return jsonify([
+        {
+            "id": r[0],
+            "title": r[1],
+            "description": r[2],
+            "start": r[3],
+            "end": r[4],
+            "allDay": bool(r[5])
+        }
+        for r in rows
+    ])
 
 
 @app.route("/events", methods=["POST"])
@@ -362,25 +328,21 @@ def add_event():
     conn = get_db()
     c = conn.cursor()
 
-    c.execute(
-        """
-        INSERT INTO events (title, description, start, end, all_day)
+    c.execute("""
+        INSERT INTO events (title, description, start_time, end_time, all_day)
         VALUES (%s, %s, %s, %s, %s)
-    """,
-        (
-            data["title"],
-            data["description"],
-            data["start"],
-            data["end"],
-            int(data.get("allDay", 0)),
-        ),
-    )
+    """, (
+        data["title"],
+        data["description"],
+        data["start"],
+        data["end"],
+        int(data.get("allDay", 0))
+    ))
 
     conn.commit()
     conn.close()
 
     return jsonify({"message": "event created"})
-
 
 # =====================================================
 # ================== DEBUG ROUTES =====================
@@ -428,6 +390,7 @@ def debug_approved():
     conn.close()
     return jsonify(data)
 
+
 @app.route("/init-db")
 def init_db_route():
     conn = get_db()
@@ -447,8 +410,8 @@ def init_db_route():
             id SERIAL PRIMARY KEY,
             title TEXT,
             description TEXT,
-            start TEXT,
-            end TEXT,
+            start_time TEXT,
+            end_time TEXT,
             all_day INTEGER DEFAULT 0
         )
     """)
@@ -458,6 +421,30 @@ def init_db_route():
 
     return "DB initialized"
 
+@app.route("/fix-db")
+def fix_db():
+    conn = get_db()
+    c = conn.cursor()
+
+    # SUPPRIME TABLE CASSEE
+    c.execute("DROP TABLE IF EXISTS events")
+
+    # RECREATION PROPRE
+    c.execute("""
+        CREATE TABLE events (
+            id SERIAL PRIMARY KEY,
+            title TEXT,
+            description TEXT,
+            start_time TEXT,
+            end_time TEXT,
+            all_day INTEGER DEFAULT 0
+        )
+    """)
+
+    conn.commit()
+    conn.close()
+
+    return "DB FIXED OK"
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
