@@ -1,42 +1,29 @@
 window.onload = () => {
 
+    // ---------------- AUTH ----------------
     let mode = "login";
 
     const modal = document.getElementById("auth_modal");
     const title = document.getElementById("modal_title");
     const submitBtn = document.getElementById("auth_submit");
 
-    const eventModal = document.getElementById("event_modal");
-    const eventTitle = document.getElementById("event_title");
-    const deleteBtn = document.getElementById("event_delete");
+    document.getElementById("login_btn").onclick = () => openAuth("login");
+    document.getElementById("signin_btn").onclick = () => openAuth("register");
 
-    let calendar;
-    let selectedRange = null;
-    let editingEvent = null;
-
-    // ---------------- AUTH ----------------
-
-    document.getElementById("login_btn").onclick = () => openModal("login");
-    document.getElementById("signin_btn").onclick = () => openModal("register");
-
-    function openModal(type) {
+    function openAuth(type) {
         mode = type;
         modal.classList.remove("hidden");
-
         title.innerText = type === "login" ? "Login" : "Sign in";
-        submitBtn.innerText = type === "login" ? "Login" : "Register";
+        submitBtn.innerText = title.innerText;
     }
 
     window.closeModal = () => modal.classList.add("hidden");
 
-    submitBtn.addEventListener("click", async () => {
-
+    submitBtn.onclick = async () => {
         const username = document.getElementById("auth_user").value;
         const password = document.getElementById("auth_pass").value;
 
-        const url = mode === "login" ? "/login" : "/register";
-
-        const res = await fetch(url, {
+        const res = await fetch(mode === "login" ? "/login" : "/register", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, password })
@@ -49,7 +36,7 @@ window.onload = () => {
             closeModal();
             showApp();
         }
-    });
+    };
 
     async function checkSession() {
         const res = await fetch("/me");
@@ -61,15 +48,17 @@ window.onload = () => {
 
     const calendarEl = document.getElementById("calendar");
 
-    window.openEventModal = openEventModal;
+    let selectedEvent = null;
 
-    calendar = new FullCalendar.Calendar(calendarEl, {
+    const calendar = new FullCalendar.Calendar(calendarEl, {
 
         initialView: "dayGridMonth",
+        timeZone: "local",
+
         events: "/events",
 
         headerToolbar: {
-            left: "prev,next today addEventButton",
+            left: "prev,next today addEvent",
             center: "title",
             right: "timeGridDay,timeGridWeek,dayGridMonth"
         },
@@ -79,113 +68,139 @@ window.onload = () => {
         editable: true,
         navLinks: true,
         dayMaxEvents: true,
+
         eventDisplay: "block",
 
-        slotMinTime: "06:00:00",
-        slotMaxTime: "23:00:00",
+        eventOrder: "start,-duration,title",
 
         customButtons: {
-            addEventButton: {
+            addEvent: {
                 text: "+ Event",
                 click: () => openEventModal()
             }
         },
 
-        // ---------------- DISPLAY CLEAN + HOURS ----------------
-        eventContent: function (arg) {
+        // ---------------- CLICK EVENT ----------------
+        eventClick: (info) => {
+            selectedEvent = info.event;
 
-            const format = (d) => d
-                ? new Date(d).toLocaleTimeString("fr-FR", {
-                    hour: "2-digit",
-                    minute: "2-digit"
-                })
-                : "";
-
-            const time = arg.event.allDay
-                ? ""
-                : `${format(arg.event.start)} - ${format(arg.event.end)}`;
-
-            return {
-                html: `
-                    <div class="fc-custom-event">
-                        <div>${arg.event.title}</div>
-                        ${time ? `<div style="font-size:11px;opacity:0.8">${time}</div>` : ""}
-                    </div>
-                `
-            };
-        },
-
-        // ---------------- EDIT ----------------
-        eventClick: function (info) {
-
-            editingEvent = info.event;
-
-            selectedRange = {
+            openEventModal({
+                id: info.event.id,
+                title: info.event.title,
                 start: info.event.start,
-                end: info.event.end || new Date(info.event.start.getTime() + 3600000),
-                allDay: info.event.allDay
-            };
-
-            eventTitle.value = info.event.title;
-
-            deleteBtn.style.display = "inline-block";
-            eventModal.classList.remove("hidden");
+                end: info.event.end
+            });
         }
     });
 
-    // ---------------- CLOSE ----------------
+    // ---------------- EVENT MODAL ----------------
+
+    const eventModal = document.getElementById("event_modal");
+    const eventTitle = document.getElementById("event_title");
+    const eventDate = document.getElementById("event_date");
+    const startHour = document.getElementById("start_hour");
+    const startMinute = document.getElementById("start_minute");
+    const endHour = document.getElementById("end_hour");
+    const endMinute = document.getElementById("end_minute");
+    const deleteBtn = document.getElementById("event_delete");
+
+    let editingId = null;
+
+    function fillFields(event) {
+        if (!event) return;
+
+        const s = new Date(event.start);
+        const e = event.end ? new Date(event.end) : new Date(s.getTime() + 3600000);
+
+        eventDate.value = s.toISOString().split("T")[0];
+
+        startHour.value = s.getHours();
+        startMinute.value = s.getMinutes();
+
+        endHour.value = e.getHours();
+        endMinute.value = e.getMinutes();
+    }
+
+    window.openEventModal = (event = null) => {
+
+        eventModal.classList.remove("hidden");
+
+        if (event) {
+            editingId = event.id;
+            eventTitle.value = event.title;
+            fillFields(event);
+            deleteBtn.style.display = "inline-block";
+        } else {
+            editingId = null;
+            eventTitle.value = "";
+            eventDate.value = "";
+            startHour.value = "";
+            startMinute.value = "";
+            endHour.value = "";
+            endMinute.value = "";
+            deleteBtn.style.display = "none";
+        }
+    };
 
     window.closeEventModal = () => {
         eventModal.classList.add("hidden");
-        eventTitle.value = "";
-        selectedRange = null;
-        editingEvent = null;
-        deleteBtn.style.display = "none";
+        selectedEvent = null;
+        editingId = null;
     };
 
-    // ---------------- SAVE ----------------
+    function buildDate() {
+
+        const date = eventDate.value;
+        const sh = parseInt(startHour.value);
+        const sm = parseInt(startMinute.value);
+        const eh = parseInt(endHour.value);
+        const em = parseInt(endMinute.value);
+
+        const start = new Date(date);
+        start.setHours(sh, sm, 0, 0);
+
+        const end = new Date(date);
+        end.setHours(eh, em, 0, 0);
+
+        return { start, end };
+    }
+
+    // ---------------- SAVE (CREATE + UPDATE) ----------------
 
     document.getElementById("event_submit").onclick = async () => {
 
         const title = eventTitle.value;
         if (!title) return;
 
-        const start = new Date(selectedRange.start);
-        const end = new Date(selectedRange.end || (start.getTime() + 3600000));
+        const { start, end } = buildDate();
 
-        const payload = {
-            title,
-            start: start.toISOString(),
-            end: end.toISOString(),
-            allDay: selectedRange.allDay ?? false
-        };
-
-        // ---------------- UPDATE ----------------
-        if (editingEvent) {
-
-            payload.id = editingEvent.id;
+        if (editingId) {
 
             await fetch("/events/update", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({
+                    id: editingId,
+                    title,
+                    start,
+                    end
+                })
             });
 
-            editingEvent.remove();
-            calendar.addEvent(payload);
+        } else {
 
-            closeEventModal();
-            return;
+            await fetch("/events", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    title,
+                    start,
+                    end
+                })
+            });
         }
 
-        // ---------------- CREATE ----------------
-        await fetch("/events", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-
-        calendar.refetchEvents();
+        calendar.refetchEvents(); // IMPORTANT (évite doublons)
         closeEventModal();
     };
 
@@ -193,43 +208,29 @@ window.onload = () => {
 
     deleteBtn.onclick = async () => {
 
-        if (!editingEvent) return;
+        if (!editingId) return;
 
         await fetch("/events/delete", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: editingEvent.id })
+            body: JSON.stringify({ id: editingId })
         });
 
-        editingEvent.remove();
-        calendar.refetchEvents();
-
+        calendar.refetchEvents(); // IMPORTANT (évite réapparition)
         closeEventModal();
     };
 
-    // ---------------- OPEN CREATE ----------------
+    // ---------------- DISPLAY FIX (HORAIRES VISIBLES) ----------------
 
-    function openEventModal() {
-
-        const now = new Date();
-
-        selectedRange = {
-            start: now,
-            end: new Date(now.getTime() + 3600000),
-            allDay: false
-        };
-
-        editingEvent = null;
-        eventTitle.value = "";
-
-        deleteBtn.style.display = "none";
-        eventModal.classList.remove("hidden");
-    }
+    calendar.setOption("eventTimeFormat", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+    });
 
     // ---------------- APP ----------------
 
     function showApp() {
-
         document.getElementById("login_btn").style.display = "none";
         document.getElementById("signin_btn").style.display = "none";
         document.querySelector(".page").style.display = "none";
@@ -237,6 +238,23 @@ window.onload = () => {
 
         calendar.render();
     }
+
+    // ---------------- ADMIN ----------------
+
+    window.loginAdmin = async () => {
+        const password = document.getElementById("admin_pass").value;
+
+        const res = await fetch("/admin/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password })
+        });
+
+        const data = await res.json();
+        alert(data.message || data.error);
+    };
+
+    // ---------------- START ----------------
 
     checkSession();
 };
