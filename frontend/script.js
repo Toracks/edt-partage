@@ -55,7 +55,7 @@ window.onload = () => {
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
 
-        initialView: "dayGridMonth",
+        initialView: "timeGridWeek",
         timeZone: "local",
 
         events: "/events",
@@ -73,14 +73,15 @@ window.onload = () => {
             }
         },
 
+        initialView: "timeGridWeek",
         editable: false,
         navLinks: true,
-        dayMaxEvents: true,
-
+        dayMaxEvents: false,
         eventDisplay: "block",
         eventOverlap: false,
         slotEventOverlap: false,
         dayMaxEventRows: false,
+        eventMaxStack: 999,
 
         eventTimeFormat: {
             hour: "2-digit",

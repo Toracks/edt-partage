@@ -256,10 +256,7 @@ body {
 
 
 .fc-daygrid-day-events {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 4px;
+    display: block !important;
 }
 
 .fc-daygrid-event-harness {
@@ -267,15 +264,18 @@ body {
     width: 100% !important;
 }
 
+.fc-daygrid-event-harness-inset {
+    display: block !important;
+    width: 100% !important;
+}
+
 .fc-daygrid-event {
     display: block !important;
     width: 100% !important;
-    margin: 0 !important;
 }
 
 .fc-event {
-    border-radius: 8px !important;
-    padding: 2px 6px !important;
-    width: 100% !important;
     display: block !important;
+    width: 100% !important;
+    margin-bottom: 4px !important;
 }
