@@ -245,15 +245,12 @@ window.onload = () => {
 
     function openModalEvent(event) {
         eventModal.classList.remove("hidden");
-        editingEvent = null; // ← reset systématique
+        editingEvent = null;
 
-        if (event) {
-            editingEvent = event;
-            eventTitle.value = event.title;
-            fill(event);
-            // ... reste du code isOwner
-        } else {
-            // Réinitialiser les champs pour un nouvel event
+        const submitBtn = document.getElementById("event_submit");
+
+        if (!event) {
+            // ── MODE CRÉATION ──
             eventTitle.value = "";
             eventTitle.disabled = false;
             const today = new Date();
@@ -264,8 +261,36 @@ window.onload = () => {
             sh.disabled = false; sm.disabled = false;
             eh.disabled = false; em.disabled = false;
             deleteBtn.style.display = "none";
-            document.getElementById("event_submit").style.display = "inline-block";
-            document.getElementById("event_submit").innerText = "Ajouter";
+            submitBtn.style.display = "inline-block";
+            submitBtn.innerText = "Ajouter";
+
+        } else {
+            editingEvent = event;
+            eventTitle.value = event.title;
+            fill(event);
+
+            const isOwner = !event.extendedProps.owner ||
+                event.extendedProps.owner === session_user;
+
+            if (isOwner) {
+                // ── MODE MODIFICATION ──
+                eventTitle.disabled = false;
+                eventDate.disabled = false;
+                sh.disabled = false; sm.disabled = false;
+                eh.disabled = false; em.disabled = false;
+                deleteBtn.style.display = "inline-block";
+                submitBtn.style.display = "inline-block";
+                submitBtn.innerText = "Modifier";
+
+            } else {
+                // ── MODE LECTURE  ──
+                eventTitle.disabled = true;
+                eventDate.disabled = true;
+                sh.disabled = true; sm.disabled = true;
+                eh.disabled = true; em.disabled = true;
+                deleteBtn.style.display = "none";
+                submitBtn.style.display = "none";
+            }
         }
     }
 
