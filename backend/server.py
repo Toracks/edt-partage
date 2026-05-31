@@ -71,14 +71,14 @@ def me():
     conn.close()
     return jsonify({"logged": True, "color": row[0] if row and row[0] else "#3788d8", "username": session["user"]})
 
-@app.route("/me/color", methods=["POST"])
-def update_color():
+@app.route("/me/color/sync-events", methods=["POST"])
+def sync_events_color():
     if not session.get("user"):
         return jsonify({"error": "not logged"}), 401
     color = request.json.get("color", "#3788d8")
     conn = get_db()
     c = conn.cursor()
-    c.execute("UPDATE users SET color=%s WHERE username=%s", (color, session["user"]))
+    c.execute("UPDATE events SET color=%s WHERE owner=%s", (color, session["user"]))
     conn.commit()
     conn.close()
     return jsonify({"message": "ok"})
