@@ -1,6 +1,5 @@
 window.onload = () => {
 
-    console.log("SCRIPT CHARGÉ ✔️");
     // ---------------- AUTH ----------------
     let mode = "login";
 
@@ -21,7 +20,6 @@ window.onload = () => {
     window.closeModal = () => modal.classList.add("hidden");
 
     submitBtn.onclick = async () => {
-
         const username = document.getElementById("auth_user").value;
         const password = document.getElementById("auth_pass").value;
 
@@ -50,14 +48,14 @@ window.onload = () => {
 
     const calendarEl = document.getElementById("calendar");
 
-    let editingId = null;
+    let editingEvent = null;
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
 
         initialView: "dayGridMonth",
-        events: "/events",
-
         timeZone: "local",
+
+        events: "/events",
 
         headerToolbar: {
             left: "prev,next today addEvent",
@@ -68,11 +66,11 @@ window.onload = () => {
         customButtons: {
             addEvent: {
                 text: "+ Event",
-                click: () => openModal()
+                click: () => openModalEvent(null)
             }
         },
 
-        editable: true,
+        editable: false,
         navLinks: true,
         dayMaxEvents: true,
 
@@ -86,23 +84,13 @@ window.onload = () => {
 
         eventOrder: "start,-duration,title",
 
-        // IMPORTANT: empêche conflits visuels
-        eventOverlap: true,
-
-        // ---------------- EDIT ----------------
+        // CLICK EVENT = EDIT
         eventClick: (info) => {
-            editingId = info.event.id;
-
-            openModal({
-                id: info.event.id,
-                title: info.event.title,
-                start: info.event.start,
-                end: info.event.end
-            });
+            openModalEvent(info.event);
         }
     });
 
-    // ---------------- MODAL ----------------
+    // ---------------- EVENT MODAL ----------------
 
     const eventModal = document.getElementById("event_modal");
     const eventTitle = document.getElementById("event_title");
@@ -118,6 +106,7 @@ window.onload = () => {
         const en = e.end ? new Date(e.end) : new Date(s.getTime() + 3600000);
 
         eventDate.value = s.toISOString().split("T")[0];
+
         sh.value = s.getHours();
         sm.value = s.getMinutes();
         eh.value = en.getHours();
@@ -136,28 +125,37 @@ window.onload = () => {
         return { start, end };
     }
 
-    window.openModal = (event = null) => {
+    function openModalEvent(event) {
 
         eventModal.classList.remove("hidden");
 
         if (event) {
-            editingId = event.id;
+            editingEvent = event;
+
             eventTitle.value = event.title;
             fill(event);
+
             deleteBtn.style.display = "inline-block";
         } else {
-            editingId = null;
+            editingEvent = null;
+
             eventTitle.value = "";
+            eventDate.value = "";
+            sh.value = "";
+            sm.value = "";
+            eh.value = "";
+            em.value = "";
+
             deleteBtn.style.display = "none";
         }
-    };
+    }
 
     window.closeEventModal = () => {
         eventModal.classList.add("hidden");
-        editingId = null;
+        editingEvent = null;
     };
 
-    // ---------------- SAVE (ANTI BUG IMPORTANT) ----------------
+    // ---------------- SAVE (ULTRA CLEAN) ----------------
 
     document.getElementById("event_submit").onclick = async () => {
 
@@ -166,13 +164,13 @@ window.onload = () => {
 
         const { start, end } = buildDate();
 
-        if (editingId) {
+        if (editingEvent) {
 
             await fetch("/events/update", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    id: editingId,
+                    id: editingEvent.id,
                     title,
                     start,
                     end
@@ -184,31 +182,35 @@ window.onload = () => {
             await fetch("/events", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ title, start, end })
+                body: JSON.stringify({
+                    title,
+                    start,
+                    end
+                })
             });
         }
-
-        await calendar.refetchEvents(); // IMPORTANT
-        closeEventModal();
-    };
-
-    // ---------------- DELETE (FIX BUG REAPPEAR) ----------------
-
-    deleteBtn.onclick = async () => {
-
-        if (!editingId) return;
-
-        await fetch("/events/delete", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: editingId })
-        });
 
         await calendar.refetchEvents(); // CRUCIAL
         closeEventModal();
     };
 
-    // ---------------- SHOW ----------------
+    // ---------------- DELETE (FIX 100%) ----------------
+
+    deleteBtn.onclick = async () => {
+
+        if (!editingEvent) return;
+
+        await fetch("/events/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: editingEvent.id })
+        });
+
+        await calendar.refetchEvents(); // IMPORTANT
+        closeEventModal();
+    };
+
+    // ---------------- SHOW APP ----------------
 
     function showApp() {
         document.getElementById("login_btn").style.display = "none";
@@ -219,20 +221,6 @@ window.onload = () => {
         calendar.render();
     }
 
-    // ---------------- ADMIN ----------------
-
-    window.loginAdmin = async () => {
-        const password = document.getElementById("admin_pass").value;
-
-        const res = await fetch("/admin/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ password })
-        });
-
-        const data = await res.json();
-        alert(data.message || data.error);
-    };
-
+    // ---------------- START ----------------
     checkSession();
 };
