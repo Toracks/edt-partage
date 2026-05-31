@@ -258,24 +258,24 @@ body {
 .fc-daygrid-day-events {
     display: flex !important;
     flex-direction: column !important;
-    align-items: stretch;
-    gap: 2px;
+    align-items: stretch !important;
+    gap: 4px;
 }
 
-/* IMPORTANT: casse le layout "inline-block position absolute" de FullCalendar */
 .fc-daygrid-event-harness {
     display: block !important;
     width: 100% !important;
 }
 
-/* force les events à prendre toute la largeur */
 .fc-daygrid-event {
     display: block !important;
     width: 100% !important;
+    margin: 0 !important;
 }
 
-/* empêche le mode multi-column interne */
-.fc-daygrid-body-balanced .fc-daygrid-day-events {
-    display: flex !important;
-    flex-direction: column !important;
+.fc-event {
+    border-radius: 8px !important;
+    padding: 2px 6px !important;
+    width: 100% !important;
+    display: block !important;
 }

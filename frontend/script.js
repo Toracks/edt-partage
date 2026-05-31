@@ -78,6 +78,9 @@ window.onload = () => {
         dayMaxEvents: true,
 
         eventDisplay: "block",
+        eventOverlap: false,
+        slotEventOverlap: false,
+        dayMaxEventRows: false,
 
         eventTimeFormat: {
             hour: "2-digit",
