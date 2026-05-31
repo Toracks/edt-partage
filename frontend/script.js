@@ -6,13 +6,12 @@ window.onload = () => {
     const title = document.getElementById("modal_title");
     const submitBtn = document.getElementById("auth_submit");
 
-    // EVENT MODAL (une seule fois)
     const eventModal = document.getElementById("event_modal");
     const eventTitle = document.getElementById("event_title");
-    const eventSubmit = document.getElementById("event_submit");
 
     let calendar;
     let selectedRange = null;
+    let editingEvent = null;
 
     // ---------------- AUTH ----------------
 
@@ -70,7 +69,6 @@ window.onload = () => {
     calendar = new FullCalendar.Calendar(calendarEl, {
 
         initialView: "dayGridMonth",
-
         events: "/events",
 
         headerToolbar: {
@@ -84,9 +82,29 @@ window.onload = () => {
         selectable: true,
         selectMirror: true,
         navLinks: true,
-        editable: false,
-        dayMaxEvents: true,
 
+        editable: true,
+
+        dayMaxEvents: true,
+        selectOverlap: true,
+        eventOverlap: true,
+
+        // -------- CREATION VIA SELECTION (SEMAINE / JOUR) --------
+        select: function (info) {
+
+            selectedRange = {
+                start: info.start,
+                end: info.end,
+                allDay: false
+            };
+
+            editingEvent = null;
+
+            eventTitle.value = "";
+            eventModal.classList.remove("hidden");
+        },
+
+        // -------- CREATION VIA MOIS --------
         dateClick: function (info) {
 
             selectedRange = {
@@ -95,24 +113,60 @@ window.onload = () => {
                 allDay: true
             };
 
+            editingEvent = null;
+
             eventTitle.value = "";
             eventModal.classList.remove("hidden");
-        }
+        },
 
+        // -------- MODIFIER EVENT --------
+        eventClick: function (info) {
+
+            editingEvent = info.event;
+
+            selectedRange = {
+                start: info.event.start,
+                end: info.event.end,
+                allDay: info.event.allDay
+            };
+
+            eventTitle.value = info.event.title;
+
+            eventModal.classList.remove("hidden");
+        }
     });
 
     // ---------------- EVENT MODAL ----------------
 
-    eventSubmit.onclick = async () => {
+    window.closeEventModal = () => {
+        eventModal.classList.add("hidden");
+        eventTitle.value = "";
+        selectedRange = null;
+        editingEvent = null;
+    };
+
+    document.getElementById("event_submit").onclick = async () => {
 
         const title = eventTitle.value;
         if (!title || !selectedRange) return;
 
+        // -------- EDIT MODE --------
+        if (editingEvent) {
+
+            editingEvent.setProp("title", title);
+            editingEvent.setStart(selectedRange.start);
+            editingEvent.setEnd(selectedRange.end);
+
+            closeEventModal();
+            return;
+        }
+
+        // -------- CREATE MODE --------
         await fetch("/events", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                title: title,
+                title,
                 description: "",
                 start: selectedRange.start,
                 end: selectedRange.end,
@@ -120,16 +174,8 @@ window.onload = () => {
             })
         });
 
-        eventModal.classList.add("hidden");
-        eventTitle.value = "";
-
+        closeEventModal();
         calendar.refetchEvents();
-    };
-
-    window.closeEventModal = () => {
-        eventModal.classList.add("hidden");
-        eventTitle.value = "";
-        selectedRange = null;
     };
 
     // ---------------- APP ----------------
