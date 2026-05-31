@@ -78,11 +78,10 @@ window.onload = () => {
         initialView: "dayGridWeek",
         editable: false,
         navLinks: true,
-        dayMaxEvents: false,
+        dayMaxEvents: 3,
         eventDisplay: "block",
         eventOverlap: false,
         slotEventOverlap: false,
-        dayMaxEventRows: false,
         eventMaxStack: 999,
 
         eventOrder: "start,-duration,title",
