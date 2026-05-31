@@ -54,19 +54,19 @@
 
             <div>
                 <h4>Début</h4>
-                <input id="start_hour" type="number" min="0" max="23">
-                <input id="start_minute" type="number" min="0" max="59">
+                <input id="start_hour" class="start_hour" type="number" min="0" max="23">
+                <input id="start_minute" class="start_minute" type="number" min="0" max="59">
             </div>
 
             <div>
                 <h4>Fin</h4>
-                <input id="end_hour" type="number" min="0" max="23">
-                <input id="end_minute" type="number" min="0" max="59">
+                <input id="end_hour" class="end_hour" type="number" min="0" max="23">
+                <input id="end_minute" class="end_minute" type="number" min="0" max="59">
             </div>
 
-            <button id="event_submit">Créer</button>
-            <button onclick="closeEventModal()">Annuler</button>
-            <button id="event_delete" style="display:none;">Supprimer</button>
+            <button id="event_submit" class="event_submit">Créer</button>
+            <button class="cancel_btn" onclick="closeEventModal()">Annuler</button>
+            <button id="event_delete" class="event_delete" style="display:none;">Supprimer</button>
 
         </div>
     </div>
