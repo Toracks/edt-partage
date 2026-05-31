@@ -11,6 +11,9 @@ import psycopg2
 app = Flask(__name__)
 app.secret_key = "N@rut0m272010admin"
 app.permanent_session_lifetime = timedelta(days=30)
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = True
+app.config["SESSION_COOKIE_HTTPONLY"] = True
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
@@ -115,7 +118,7 @@ def login():
 @app.route("/me")
 def me():
     if not session.get("user"):
-        return jsonify({"logged": False}), 401
+        return jsonify({"logged": False}), 200  # ← 200 au lieu de 401
 
     conn = get_db()
     c = conn.cursor()
