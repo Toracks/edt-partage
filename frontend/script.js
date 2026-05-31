@@ -76,51 +76,62 @@ window.onload = () => {
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
 
-        initialView: 'dayGridMonth',
+    initialView: 'dayGridMonth',
 
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'timeGridDay,timeGridWeek,dayGridMonth'
-        },
+    events: "/events",
 
-        locale: 'fr',
+    headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'timeGridDay,timeGridWeek,dayGridMonth'
+    },
 
-        selectable: true,
-        selectMirror: true,
+    locale: 'fr',
 
-        navLinks: true,
-        editable: false,
-        dayMaxEvents: true,
+    selectable: true,
+    selectMirror: true,
 
-        
-        dateClick: function (info) {
-            const title = prompt("Nom de l'événement :");
+    navLinks: true,
+    editable: false,
+    dayMaxEvents: true,
 
-            if (!title) return;
+    dateClick: function (info) {
+        const title = prompt("Nom de l'événement :");
+        if (!title) return;
 
-            calendar.addEvent({
+        fetch("/events", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
                 title: title,
+                description: "",
                 start: info.date,
+                end: info.date,
                 allDay: true
-            });
-        },
+            })
+        }).then(() => calendar.refetchEvents());
+    },
 
-        
-        select: function (info) {
-            const title = prompt("Nom de l'événement :");
+    select: function (info) {
+        const title = prompt("Nom de l'événement :");
+        if (!title) return;
 
-            if (!title) return;
-
-            calendar.addEvent({
+        fetch("/events", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
                 title: title,
+                description: "",
                 start: info.start,
-                end: info.end
-            });
+                end: info.end,
+                allDay: false
+            })
+        }).then(() => calendar.refetchEvents());
 
-            calendar.unselect();
-        }
-    });
+        calendar.unselect();
+    }
+
+});
 
     function showApp() {
         document.getElementById("login_btn").style.display = "none";
