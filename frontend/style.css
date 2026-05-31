@@ -232,3 +232,13 @@ body {
     border-radius: 15px;
     overflow: hidden;
 }
+
+.fc-timegrid-slot,
+.fc-timegrid-axis,
+.fc-timegrid-divider {
+    display: none !important;
+}
+
+.fc-timegrid-axis-frame {
+    display: none !important;
+}

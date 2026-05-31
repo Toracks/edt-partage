@@ -8,6 +8,7 @@ window.onload = () => {
 
     const eventModal = document.getElementById("event_modal");
     const eventTitle = document.getElementById("event_title");
+    const deleteBtn = document.getElementById("event_delete");
 
     let calendar = null;
     let selectedRange = null;
@@ -89,13 +90,11 @@ window.onload = () => {
         customButtons: {
             addEventButton: {
                 text: "+ Event",
-                click: function () {
-                    openEventModal();
-                }
+                click: () => openEventModal()
             }
         },
 
-        // ---------------- EDIT EVENT ----------------
+        // ---------------- CLICK EVENT (EDIT) ----------------
         eventClick: function (info) {
 
             editingEvent = info.event;
@@ -108,6 +107,8 @@ window.onload = () => {
 
             eventTitle.value = info.event.title;
 
+            deleteBtn.style.display = "inline-block";
+
             eventModal.classList.remove("hidden");
         }
     });
@@ -119,14 +120,17 @@ window.onload = () => {
         eventTitle.value = "";
         selectedRange = null;
         editingEvent = null;
+        deleteBtn.style.display = "none";
     };
+
+    // ---------------- CREATE / UPDATE ----------------
 
     document.getElementById("event_submit").onclick = async () => {
 
         const title = eventTitle.value;
         if (!title) return;
 
-        // ---------------- EDIT MODE ----------------
+        // ---------------- EDIT ----------------
         if (editingEvent) {
 
             await fetch("/events/update", {
@@ -149,7 +153,7 @@ window.onload = () => {
             return;
         }
 
-        // ---------------- CREATE MODE ----------------
+        // ---------------- CREATE ----------------
         await fetch("/events", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -163,6 +167,22 @@ window.onload = () => {
         });
 
         calendar.refetchEvents();
+        closeEventModal();
+    };
+
+    // ---------------- DELETE ----------------
+
+    deleteBtn.onclick = async () => {
+
+        if (!editingEvent) return;
+
+        await fetch("/events/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: editingEvent.id })
+        });
+
+        editingEvent.remove();
         closeEventModal();
     };
 
@@ -180,6 +200,8 @@ window.onload = () => {
 
         eventTitle.value = "";
 
+        deleteBtn.style.display = "none";
+
         eventModal.classList.remove("hidden");
     }
 
@@ -195,7 +217,10 @@ window.onload = () => {
         calendar.render();
     }
 
+    // ---------------- ADMIN ----------------
+
     window.loginAdmin = async () => {
+
         const password = document.getElementById("admin_pass").value;
 
         const res = await fetch("/admin/login", {
@@ -207,6 +232,8 @@ window.onload = () => {
         const data = await res.json();
         alert(data.message || data.error);
     };
+
+    // ---------------- START ----------------
 
     checkSession();
 };
