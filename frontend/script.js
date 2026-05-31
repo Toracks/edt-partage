@@ -323,7 +323,7 @@ window.onload = () => {
         calendar.render();
         setInterval(() => {
             calendar.refetchEvents();
-        }, 30000);
+        }, 3000);
     }
 
     checkSession();
