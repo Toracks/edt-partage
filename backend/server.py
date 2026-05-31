@@ -311,6 +311,17 @@ def init_db():
     conn.close()
     return "OK"
 
+@app.route("/migrate-db")
+def migrate_db():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS color TEXT DEFAULT '#3788d8'")
+    c.execute("ALTER TABLE events ADD COLUMN IF NOT EXISTS color TEXT DEFAULT '#3788d8'")
+    c.execute("ALTER TABLE events ADD COLUMN IF NOT EXISTS owner TEXT DEFAULT ''")
+    conn.commit()
+    conn.close()
+    return "Migration OK"
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
