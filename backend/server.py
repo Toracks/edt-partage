@@ -11,12 +11,17 @@ app.permanent_session_lifetime = timedelta(days=30)
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
+if not DATABASE_URL:
+    print("WARNING: DATABASE_URL not set")
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND = os.path.join(BASE_DIR, "..", "frontend")
 
 
 # ---------------- DB CONNECTION ----------------
 def get_db():
+    if not DATABASE_URL:
+        raise Exception("DATABASE_URL missing")
     return psycopg2.connect(DATABASE_URL)
 
 
@@ -41,7 +46,7 @@ def init_db():
             description TEXT,
             start TEXT,
             end TEXT,
-            all_day INTEGER DEFAULT 0
+            all_day BOOLEAN DEFAULT FALSE
         )
     """)
 
@@ -49,7 +54,14 @@ def init_db():
     conn.close()
 
 
-init_db()
+def safe_init():
+    try:
+        init_db()
+    except Exception as e:
+        print("DB init skipped:", e)
+
+
+safe_init()
 
 
 # ---------------- FRONTEND ----------------
@@ -67,6 +79,7 @@ def static_files(path):
 # ================== AUTH SYSTEM ======================
 # =====================================================
 
+
 @app.route("/register", methods=["POST"])
 def register():
     data = request.json
@@ -79,10 +92,13 @@ def register():
         conn = get_db()
         c = conn.cursor()
 
-        c.execute("""
+        c.execute(
+            """
             INSERT INTO users (username, password, status)
             VALUES (%s, %s, 'pending')
-        """, (username, hashed))
+        """,
+            (username, hashed),
+        )
 
         conn.commit()
         conn.close()
@@ -105,9 +121,12 @@ def login():
     conn = get_db()
     c = conn.cursor()
 
-    c.execute("""
+    c.execute(
+        """
         SELECT password, status FROM users WHERE username=%s
-    """, (username,))
+    """,
+        (username,),
+    )
 
     user = c.fetchone()
     conn.close()
@@ -224,10 +243,13 @@ def admin_approve():
     conn = get_db()
     c = conn.cursor()
 
-    c.execute("""
+    c.execute(
+        """
         UPDATE users SET status='approved'
         WHERE username=%s
-    """, (username,))
+    """,
+        (username,),
+    )
 
     conn.commit()
     conn.close()
@@ -265,11 +287,14 @@ def admin_rename():
     c = conn.cursor()
 
     try:
-        c.execute("""
+        c.execute(
+            """
             UPDATE users
             SET username=%s
             WHERE id=%s
-        """, (new, user_id))
+        """,
+            (new, user_id),
+        )
 
         conn.commit()
 
@@ -304,6 +329,7 @@ def admin_delete():
 # ================== EVENTS SYSTEM ====================
 # =====================================================
 
+
 @app.route("/events", methods=["GET"])
 def get_events():
     conn = get_db()
@@ -314,17 +340,19 @@ def get_events():
 
     conn.close()
 
-    return jsonify([
-        {
-            "id": r[0],
-            "title": r[1],
-            "description": r[2],
-            "start": r[3],
-            "end": r[4],
-            "allDay": bool(r[5])
-        }
-        for r in rows
-    ])
+    return jsonify(
+        [
+            {
+                "id": r[0],
+                "title": r[1],
+                "description": r[2],
+                "start": r[3],
+                "end": r[4],
+                "allDay": bool(r[5]),
+            }
+            for r in rows
+        ]
+    )
 
 
 @app.route("/events", methods=["POST"])
@@ -334,16 +362,19 @@ def add_event():
     conn = get_db()
     c = conn.cursor()
 
-    c.execute("""
+    c.execute(
+        """
         INSERT INTO events (title, description, start, end, all_day)
         VALUES (%s, %s, %s, %s, %s)
-    """, (
-        data["title"],
-        data["description"],
-        data["start"],
-        data["end"],
-        int(data.get("allDay", 0))
-    ))
+    """,
+        (
+            data["title"],
+            data["description"],
+            data["start"],
+            data["end"],
+            int(data.get("allDay", 0)),
+        ),
+    )
 
     conn.commit()
     conn.close()
@@ -354,6 +385,7 @@ def add_event():
 # =====================================================
 # ================== DEBUG ROUTES =====================
 # =====================================================
+
 
 @app.route("/debug/users")
 def debug_users():
