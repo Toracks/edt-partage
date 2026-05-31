@@ -140,7 +140,7 @@ window.onload = () => {
 
     settingsPanel.appendChild(colorBtn);
     const fixBtn = document.createElement("button");
-    fixBtn.innerText = "🔧 Claim old events";
+    fixBtn.innerText = "🔧 Manual Refresh";
     fixBtn.style.cssText = `
     background: rgba(255, 180, 0, 0.2);
     border: 1px solid rgba(255, 180, 0, 0.5);
