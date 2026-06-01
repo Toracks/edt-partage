@@ -304,7 +304,6 @@ body {
     cursor: text;
     font-size: 15px;
     transition: 0.25s;
-    text-transform: capitalize;
 }
 
 .auth_user:hover {
