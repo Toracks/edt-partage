@@ -339,6 +339,18 @@ def fix_my_events():
     conn.close()
     return jsonify({"message": "ok"})
 
+@app.route("/admin/delete", methods=["POST"])
+def admin_delete():
+    if not is_admin():
+        return jsonify({"error": "forbidden"}), 403
+    user_id = request.json["id"]
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM users WHERE id=%s", (user_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "deleted"})
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)

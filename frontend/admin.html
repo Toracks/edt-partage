@@ -117,8 +117,8 @@
                 li.innerHTML = `
             ${u.username}
             <button onclick="renameUser(${u.id})">✏️</button>
-            <button onclick="deleteUser(${u.id})">❌</button>
-        `;
+            <button onclick="deleteUser(${u.id}, '${u.username}')">❌</button>  
+        `;  // ← ici tu ajoutes ', '${u.username}' dans l'appel deleteUser
 
                 list.appendChild(li);
             });
@@ -145,20 +145,17 @@
             await loadApproved();
         }
 
-        async function deleteUser(id) {
+        async function deleteUser(id, username) {
+            if (!confirm(`Supprimer le compte "${username}" ? Cette action est irréversible.`)) return;
 
             const res = await fetch("/admin/delete", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    id: id
-                })
+                body: JSON.stringify({ id })
             });
 
             const data = await res.json();
-
             console.log(data);
-
             await loadApproved();
         }
 
