@@ -12,18 +12,22 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND = os.path.join(BASE_DIR, "..", "frontend")
 
+
 def get_db():
     if not DATABASE_URL:
         raise Exception("DATABASE_URL missing")
     return psycopg2.connect(DATABASE_URL)
 
+
 @app.route("/")
 def home():
     return send_from_directory(FRONTEND, "index.html")
 
+
 @app.route("/<path:path>")
 def static_files(path):
     return send_from_directory(FRONTEND, path)
+
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -34,19 +38,25 @@ def register():
     try:
         conn = get_db()
         c = conn.cursor()
-        c.execute("INSERT INTO users (username, password, status) VALUES (%s, %s, 'pending')", (username, hashed))
+        c.execute(
+            "INSERT INTO users (username, password, status) VALUES (%s, %s, 'pending')",
+            (username, hashed),
+        )
         conn.commit()
         conn.close()
     except psycopg2.IntegrityError:
         return jsonify({"error": "Username already exists"}), 400
     return jsonify({"message": "Account created"})
 
+
 @app.route("/login", methods=["POST"])
 def login():
     data = request.json
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT password, status FROM users WHERE username=%s", (data["username"],))
+    c.execute(
+        "SELECT password, status FROM users WHERE username=%s", (data["username"],)
+    )
     user = c.fetchone()
     conn.close()
     if not user:
@@ -60,6 +70,7 @@ def login():
     session["user"] = data["username"]
     return jsonify({"message": "Logged in"})
 
+
 @app.route("/me")
 def me():
     if not session.get("user"):
@@ -69,7 +80,14 @@ def me():
     c.execute("SELECT color FROM users WHERE username=%s", (session["user"],))
     row = c.fetchone()
     conn.close()
-    return jsonify({"logged": True, "color": row[0] if row and row[0] else "#3788d8", "username": session["user"]})
+    return jsonify(
+        {
+            "logged": True,
+            "color": row[0] if row and row[0] else "#3788d8",
+            "username": session["user"],
+        }
+    )
+
 
 @app.route("/me/color/sync-events", methods=["POST"])
 def sync_events_color():
@@ -83,15 +101,19 @@ def sync_events_color():
     conn.close()
     return jsonify({"message": "ok"})
 
+
 @app.route("/logout", methods=["POST", "GET"])
 def logout():
     session.clear()
     return jsonify({"message": "Logged out"})
 
+
 ADMIN_PASSWORD = "Greninj@272010admin"
+
 
 def is_admin():
     return session.get("admin") is True
+
 
 @app.route("/admin/login", methods=["POST"])
 def admin_login():
@@ -101,10 +123,12 @@ def admin_login():
         return jsonify({"message": "admin connected"})
     return jsonify({"error": "forbidden"}), 403
 
+
 @app.route("/admin/logout", methods=["POST", "GET"])
 def admin_logout():
     session.pop("admin", None)
     return jsonify({"message": "admin disconnected"})
+
 
 @app.route("/admin/pending")
 def admin_pending():
@@ -117,6 +141,7 @@ def admin_pending():
     conn.close()
     return jsonify(users)
 
+
 @app.route("/admin/approved")
 def admin_approved():
     if not is_admin():
@@ -127,6 +152,7 @@ def admin_approved():
     users = [{"id": r[0], "username": r[1]} for r in c.fetchall()]
     conn.close()
     return jsonify(users)
+
 
 @app.route("/admin/approve", methods=["POST"])
 def admin_approve():
@@ -140,6 +166,7 @@ def admin_approve():
     conn.close()
     return jsonify({"message": "approved"})
 
+
 @app.route("/admin/reject", methods=["POST"])
 def admin_reject():
     if not is_admin():
@@ -151,6 +178,7 @@ def admin_reject():
     conn.commit()
     conn.close()
     return jsonify({"message": "rejected"})
+
 
 @app.route("/admin/rename", methods=["POST"])
 def admin_rename():
@@ -169,31 +197,38 @@ def admin_rename():
         conn.close()
     return jsonify({"message": "renamed"})
 
+
 def to_iso(v):
     if not v:
         return None
     return str(v).replace(" ", "T")
 
+
 @app.route("/events", methods=["GET"])
 def get_events():
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT id, title, description, start_time, end_time, all_day, color, owner FROM events ORDER BY start_time")
+    c.execute(
+        "SELECT id, title, description, start_time, end_time, all_day, color, owner FROM events ORDER BY start_time"
+    )
     rows = c.fetchall()
     conn.close()
-    return jsonify([
-        {
-            "id": r[0],
-            "title": r[1],
-            "description": r[2],
-            "start": to_iso(r[3]),
-            "end": to_iso(r[4]),
-            "allDay": bool(r[5]),
-            "color": r[6] or "#3788d8",
-            "owner": r[7] or ""
-        }
-        for r in rows
-    ])
+    return jsonify(
+        [
+            {
+                "id": r[0],
+                "title": r[1],
+                "description": r[2],
+                "start": to_iso(r[3]),
+                "end": to_iso(r[4]),
+                "allDay": bool(r[5]),
+                "color": r[6] or "#3788d8",
+                "owner": r[7] or "",
+            }
+            for r in rows
+        ]
+    )
+
 
 @app.route("/events", methods=["POST"])
 def add_event():
@@ -207,11 +242,20 @@ def add_event():
     color = row[0] if row and row[0] else "#3788d8"
     c.execute(
         "INSERT INTO events (title, description, start_time, end_time, all_day, color, owner) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-        (data["title"], data.get("description", ""), data["start"], data["end"], int(data.get("allDay", 0)), color, session["user"])
+        (
+            data["title"],
+            data.get("description", ""),
+            data["start"],
+            data["end"],
+            int(data.get("allDay", 0)),
+            color,
+            session["user"],
+        ),
     )
     conn.commit()
     conn.close()
     return jsonify({"message": "created"})
+
 
 @app.route("/events/update", methods=["POST"])
 def update_event():
@@ -227,11 +271,18 @@ def update_event():
         return jsonify({"error": "forbidden"}), 403
     c.execute(
         "UPDATE events SET title=%s, start_time=%s, end_time=%s, all_day=%s WHERE id=%s",
-        (data["title"], data["start"], data["end"], int(data.get("allDay", 0)), data["id"])
+        (
+            data["title"],
+            data["start"],
+            data["end"],
+            int(data.get("allDay", 0)),
+            data["id"],
+        ),
     )
     conn.commit()
     conn.close()
     return jsonify({"message": "updated"})
+
 
 @app.route("/events/delete", methods=["POST"])
 def delete_event():
@@ -250,6 +301,7 @@ def delete_event():
     conn.close()
     return jsonify({"message": "deleted"})
 
+
 @app.route("/debug/users")
 def debug_users():
     conn = get_db()
@@ -258,6 +310,7 @@ def debug_users():
     data = c.fetchall()
     conn.close()
     return jsonify(data)
+
 
 @app.route("/debug/raw_users")
 def raw_users():
@@ -268,10 +321,12 @@ def raw_users():
     conn.close()
     return jsonify(data)
 
+
 @app.route("/debug/clear_session")
 def clear_session():
     session.clear()
     return "cleared"
+
 
 @app.route("/debug/approved")
 def debug_approved():
@@ -281,6 +336,7 @@ def debug_approved():
     data = c.fetchall()
     conn.close()
     return jsonify(data)
+
 
 @app.route("/init-db")
 def init_db():
@@ -311,16 +367,20 @@ def init_db():
     conn.close()
     return "OK"
 
+
 @app.route("/migrate-db")
 def migrate_db():
     conn = get_db()
     c = conn.cursor()
     c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS color TEXT DEFAULT '#3788d8'")
-    c.execute("ALTER TABLE events ADD COLUMN IF NOT EXISTS color TEXT DEFAULT '#3788d8'")
+    c.execute(
+        "ALTER TABLE events ADD COLUMN IF NOT EXISTS color TEXT DEFAULT '#3788d8'"
+    )
     c.execute("ALTER TABLE events ADD COLUMN IF NOT EXISTS owner TEXT DEFAULT ''")
     conn.commit()
     conn.close()
     return "Migration OK"
+
 
 @app.route("/fix-my-events", methods=["POST"])
 def fix_my_events():
@@ -332,12 +392,12 @@ def fix_my_events():
     row = c.fetchone()
     color = row[0] if row and row[0] else "#3788d8"
     c.execute(
-        "UPDATE events SET color=%s, owner=%s WHERE owner=''",
-        (color, session["user"])
+        "UPDATE events SET color=%s, owner=%s WHERE owner=''", (color, session["user"])
     )
     conn.commit()
     conn.close()
     return jsonify({"message": "ok"})
+
 
 @app.route("/admin/delete", methods=["POST"])
 def admin_delete():
@@ -351,23 +411,19 @@ def admin_delete():
     conn.close()
     return jsonify({"message": "deleted"})
 
-@app.route("/backup")
-def backup():
+
+@app.route("/me/color", methods=["POST"])
+def update_color():
+    if not session.get("user"):
+        return jsonify({"error": "not logged"}), 401
+    color = request.json.get("color", "#3788d8")
     conn = get_db()
     c = conn.cursor()
-
-    c.execute("SELECT * FROM users")
-    users = c.fetchall()
-
-    c.execute("SELECT * FROM events")
-    events = c.fetchall()
-
+    c.execute("UPDATE users SET color=%s WHERE username=%s", (color, session["user"]))
+    conn.commit()
     conn.close()
+    return jsonify({"message": "ok"})
 
-    return jsonify({
-        "users": users,
-        "events": events
-    })
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
