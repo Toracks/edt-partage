@@ -351,6 +351,24 @@ def admin_delete():
     conn.close()
     return jsonify({"message": "deleted"})
 
+@app.route("/backup")
+def backup():
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute("SELECT * FROM users")
+    users = c.fetchall()
+
+    c.execute("SELECT * FROM events")
+    events = c.fetchall()
+
+    conn.close()
+
+    return jsonify({
+        "users": users,
+        "events": events
+    })
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
