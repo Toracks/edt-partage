@@ -566,7 +566,6 @@ body {
     filter: invert(1) brightness(0.9);
 }
 
-
 .tag_badge {
     background: rgba(0, 153, 255, 0.3);
     border: 1px solid rgba(0, 153, 255, 0.7);
