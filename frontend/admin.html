@@ -113,11 +113,12 @@
 
             users.forEach(u => {
                 const li = document.createElement("li");
+                li.classList.add("users");
 
                 li.innerHTML = `
             ${u.username}
-            <button onclick="renameUser(${u.id})">✏️</button>
-            <button onclick="deleteUser(${u.id}, '${u.username}')">❌</button>  
+            <button class="Rename_btn" onclick="renameUser(${u.id})">✏️</button>
+            <button class="Delete_btn" onclick="deleteUser(${u.id}, '${u.username}')">❌</button>  
         `;
 
                 list.appendChild(li);
