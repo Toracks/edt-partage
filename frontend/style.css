@@ -565,3 +565,35 @@ body {
 .end_minute::-webkit-inner-spin-button:hover {
     filter: invert(1) brightness(0.9);
 }
+
+.tag_badge {
+    background: rgba(0, 153, 255, 0.3);
+    border: 1px solid rgba(0, 153, 255, 0.7);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tag_badge .remove {
+    cursor: pointer;
+    color: #f55;
+    font-weight: bold;
+}
+
+#tag_suggestions li {
+    padding: 8px 12px;
+    cursor: pointer;
+    color: white;
+}
+
+#tag_suggestions li:hover {
+    background: rgba(0, 153, 255, 0.3);
+}
+
+.event-tagged {
+    box-shadow: 0 0 10px 3px var(--user-color) !important;
+    border-radius: 4px;
+}

@@ -209,13 +209,14 @@ def get_events():
     conn = get_db()
     c = conn.cursor()
     c.execute(
-        "SELECT id, title, description, start_time, end_time, all_day, color, owner FROM events ORDER BY start_time"
+        "SELECT id, title, description, start_time, end_time, all_day, color, owner, tagged_users FROM events ORDER BY start_time"
     )
     rows = c.fetchall()
     conn.close()
     return jsonify(
         [
             {
+                "taggedUsers": r[8] or "",
                 "id": r[0],
                 "title": r[1],
                 "description": r[2],
@@ -240,8 +241,9 @@ def add_event():
     c.execute("SELECT color FROM users WHERE username=%s", (session["user"],))
     row = c.fetchone()
     color = row[0] if row and row[0] else "#3788d8"
+    tagged = data.get("taggedUsers", "")
     c.execute(
-        "INSERT INTO events (title, description, start_time, end_time, all_day, color, owner) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+        "INSERT INTO events (title, description, start_time, end_time, all_day, color, owner, tagged_users) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
         (
             data["title"],
             data.get("description", ""),
@@ -250,6 +252,7 @@ def add_event():
             int(data.get("allDay", 0)),
             color,
             session["user"],
+            tagged,
         ),
     )
     conn.commit()
@@ -269,13 +272,15 @@ def update_event():
     if not row or row[0] != session["user"]:
         conn.close()
         return jsonify({"error": "forbidden"}), 403
+    tagged = data.get("taggedUsers", "")
     c.execute(
-        "UPDATE events SET title=%s, start_time=%s, end_time=%s, all_day=%s WHERE id=%s",
+        "UPDATE events SET title=%s, start_time=%s, end_time=%s, all_day=%s, tagged_users=%s WHERE id=%s",
         (
             data["title"],
             data["start"],
             data["end"],
             int(data.get("allDay", 0)),
+            tagged,
             data["id"],
         ),
     )
@@ -372,6 +377,9 @@ def init_db():
 def migrate_db():
     conn = get_db()
     c = conn.cursor()
+    c.execute(
+        "ALTER TABLE events ADD COLUMN IF NOT EXISTS tagged_users TEXT DEFAULT ''"
+    )
     c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS color TEXT DEFAULT '#3788d8'")
     c.execute(
         "ALTER TABLE events ADD COLUMN IF NOT EXISTS color TEXT DEFAULT '#3788d8'"
@@ -423,6 +431,17 @@ def update_color():
     conn.commit()
     conn.close()
     return jsonify({"message": "ok"})
+
+
+@app.route("/users/approved")
+def get_approved_users():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT username FROM users WHERE status='approved'")
+    users = [r[0] for r in c.fetchall()]
+    conn.close()
+    return jsonify(users)
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

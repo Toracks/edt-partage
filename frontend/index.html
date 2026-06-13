@@ -64,6 +64,12 @@
                 <input id="end_minute" class="end_minute" type="number" min="0" max="59">
             </div>
 
+            <div id="tag_container" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
+            <input id="tag_input" class="event_title" placeholder="Personnes concernées..." autocomplete="off">
+            <ul id="tag_suggestions"
+                style="display:none; list-style:none; padding:0; margin:0; background:#222; border:1px solid #555; border-radius:8px; max-height:150px; overflow-y:auto;">
+            </ul>
+
             <button id="event_submit" class="event_submit">Créer</button>
             <button class="cancel_btn" onclick="closeEventModal()">Annuler</button>
             <button id="event_delete" class="event_delete" style="display:none;">Supprimer</button>

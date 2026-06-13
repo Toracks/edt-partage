@@ -4,6 +4,8 @@ window.onload = () => {
 
     let mode = "login";
     let userColor = "#3788d8";
+    let approvedUsers = [];
+    let taggedPeople = [];
     let settingsOpen = false;
 
     const modal = document.getElementById("auth_modal");
@@ -51,6 +53,9 @@ window.onload = () => {
         const data = await res.json();
         if (data.logged) {
             userColor = data.color || "#3788d8";
+            document.documentElement.style.setProperty('--user-color', userColor);
+            const uRes = await fetch("/users/approved");
+            approvedUsers = await uRes.json();
             session_user = data.username;
             showApp();
         } else {
@@ -210,7 +215,14 @@ window.onload = () => {
             }
         },
         eventOrder: "start,-duration,title",
-        eventClick: (info) => openModalEvent(info.event)
+        eventClick: (info) => openModalEvent(info.event),
+        eventDidMount: (info) => {
+            const tagged = info.event.extendedProps.taggedUsers || "";
+            const names = tagged.split(",").filter(Boolean);
+            if (session_user && names.includes(session_user)) {
+                info.el.classList.add("event-tagged");
+            }
+        }
     });
 
     // ---------------- EVENT MODAL ----------------
@@ -223,6 +235,52 @@ window.onload = () => {
     const eh = document.getElementById("end_hour");
     const em = document.getElementById("end_minute");
     const deleteBtn = document.getElementById("event_delete");
+    const tagInput = document.getElementById("tag_input");
+    const tagSuggestions = document.getElementById("tag_suggestions");
+    const tagContainer = document.getElementById("tag_container");
+
+    function renderTags(readOnly) {
+        tagContainer.innerHTML = "";
+        taggedPeople.forEach(name => {
+            const badge = document.createElement("span");
+            badge.className = "tag_badge";
+            badge.innerHTML = readOnly
+                ? `👤 ${name}`
+                : `👤 ${name} <span class="remove" onclick="removeTag('${name}')">×</span>`;
+            tagContainer.appendChild(badge);
+        });
+    }
+
+    window.removeTag = (name) => {
+        taggedPeople = taggedPeople.filter(n => n !== name);
+        renderTags(false);
+    };
+
+    tagInput.oninput = () => {
+        const val = tagInput.value.toLowerCase();
+        const filtered = approvedUsers.filter(u =>
+            u.toLowerCase().includes(val) && !taggedPeople.includes(u)
+        );
+        tagSuggestions.innerHTML = "";
+        if (!val || !filtered.length) { tagSuggestions.style.display = "none"; return; }
+        filtered.forEach(u => {
+            const li = document.createElement("li");
+            li.innerText = u;
+            li.onclick = () => {
+                taggedPeople.push(u);
+                tagInput.value = "";
+                tagSuggestions.style.display = "none";
+                renderTags(false);
+            };
+            tagSuggestions.appendChild(li);
+        });
+        tagSuggestions.style.display = "block";
+    };
+
+    tagInput.onfocus = () => tagInput.oninput();
+    document.addEventListener("click", (e) => {
+        if (e.target !== tagInput) tagSuggestions.style.display = "none";
+    });
 
     function fill(e) {
         const s = new Date(e.start);
@@ -246,6 +304,9 @@ window.onload = () => {
     function openModalEvent(event) {
         eventModal.classList.remove("hidden");
         editingEvent = null;
+        taggedPeople = [];
+        tagInput.value = "";
+        tagSuggestions.style.display = "none";
 
         const submitBtn = document.getElementById("event_submit");
 
@@ -263,11 +324,16 @@ window.onload = () => {
             deleteBtn.style.display = "none";
             submitBtn.style.display = "inline-block";
             submitBtn.innerText = "Ajouter";
+            tagInput.style.display = "block";
+            renderTags(false);
 
         } else {
             editingEvent = event;
             eventTitle.value = event.title;
             fill(event);
+            taggedPeople = event.extendedProps.taggedUsers
+                ? event.extendedProps.taggedUsers.split(",").filter(Boolean)
+                : [];
 
             const isOwner = !event.extendedProps.owner ||
                 event.extendedProps.owner === session_user;
@@ -281,6 +347,8 @@ window.onload = () => {
                 deleteBtn.style.display = "inline-block";
                 submitBtn.style.display = "inline-block";
                 submitBtn.innerText = "Modifier";
+                tagInput.style.display = "block";
+                renderTags(false);
 
             } else {
                 // ── MODE LECTURE  ──
@@ -290,6 +358,8 @@ window.onload = () => {
                 eh.disabled = true; em.disabled = true;
                 deleteBtn.style.display = "none";
                 submitBtn.style.display = "none";
+                tagInput.style.display = "none";
+                renderTags(true);
             }
         }
     }
@@ -307,7 +377,7 @@ window.onload = () => {
             const res = await fetch("/events/update", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id: editingEvent.id, title, start, end })
+                body: JSON.stringify({ id: editingEvent.id, title, start, end, taggedUsers: taggedPeople.join(",") }),
             });
             if (res.status === 403) {
                 alert("Vous ne pouvez pas modifier un événement d'un autre compte.");
@@ -318,7 +388,7 @@ window.onload = () => {
             await fetch("/events", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ title, start, end })
+                body: JSON.stringify({ title, start, end, taggedUsers: taggedPeople.join(",") }),
             });
         }
         await calendar.refetchEvents();
